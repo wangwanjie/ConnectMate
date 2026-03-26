@@ -5,8 +5,16 @@ final class MainSplitViewController: NSSplitViewController {
     private let router: AppRouter
     private let settings: AppSettings
     private let sidebarController: SidebarViewController
-    private let listController = ModulePaneViewController(role: .list)
-    private let detailController = ModulePaneViewController(role: .detail)
+    private let listController = PaneHostViewController(role: .list)
+    private let detailController = PaneHostViewController(role: .detail)
+    private lazy var appDetailController = AppDetailViewController()
+    private lazy var appListController: AppListViewController = {
+        let controller = AppListViewController()
+        controller.onSelectApp = { [weak self] app in
+            self?.appDetailController.render(app: app)
+        }
+        return controller
+    }()
 
     init(router: AppRouter, settings: AppSettings) {
         self.router = router
@@ -49,14 +57,59 @@ final class MainSplitViewController: NSSplitViewController {
     }
 
     private func show(section: AppSection) {
-        listController.render(
-            title: section.contentTitle,
-            detail: String(format: L10n.Modules.listDescription, section.title)
-        )
-        detailController.render(
-            title: "\(section.contentTitle) Detail",
-            detail: String(format: L10n.Modules.detailDescription, section.title)
-        )
+        switch section {
+        case .apps:
+            listController.display(appListController)
+            detailController.display(appDetailController)
+        default:
+            let list = ModulePaneViewController(role: .list)
+            list.render(
+                title: section.contentTitle,
+                detail: String(format: L10n.Modules.listDescription, section.title)
+            )
+            let detail = ModulePaneViewController(role: .detail)
+            detail.render(
+                title: "\(section.contentTitle) Detail",
+                detail: String(format: L10n.Modules.detailDescription, section.title)
+            )
+            listController.display(list)
+            detailController.display(detail)
+        }
+    }
+}
+
+private final class PaneHostViewController: NSViewController {
+    private let role: ModulePaneRole
+    private var currentChild: NSViewController?
+
+    init(role: ModulePaneRole) {
+        self.role = role
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func loadView() {
+        view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = (role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor).cgColor
+    }
+
+    func display(_ child: NSViewController) {
+        if let currentChild {
+            currentChild.view.removeFromSuperview()
+            currentChild.removeFromParent()
+        }
+
+        addChild(child)
+        view.addSubview(child.view)
+        child.view.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        currentChild = child
     }
 }
 

@@ -160,6 +160,25 @@ enum L10n {
         static var detailDescription: String { tr("modules.detailDescription") }
     }
 
+    enum Apps {
+        static var title: String { tr("apps.title") }
+        static var searchPlaceholder: String { tr("apps.searchPlaceholder") }
+        static var refresh: String { tr("apps.refresh") }
+        static var loading: String { tr("apps.loading") }
+        static var emptyTitle: String { tr("apps.emptyTitle") }
+        static var emptyDetail: String { tr("apps.emptyDetail") }
+        static var bundleID: String { tr("apps.bundleID") }
+        static var platform: String { tr("apps.platform") }
+        static var state: String { tr("apps.state") }
+        static var sku: String { tr("apps.sku") }
+        static var appID: String { tr("apps.appID") }
+        static var cachedAt: String { tr("apps.cachedAt") }
+        static var noSelectionTitle: String { tr("apps.noSelectionTitle") }
+        static var noSelectionDetail: String { tr("apps.noSelectionDetail") }
+        static var unavailable: String { tr("apps.unavailable") }
+        static var loadFailed: String { tr("apps.loadFailed") }
+    }
+
     enum Tasking {
         static var noActiveTasks: String { tr("tasking.noActiveTasks") }
         static var activeTaskCount: String { tr("tasking.activeTaskCount") }
