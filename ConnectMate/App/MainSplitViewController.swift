@@ -60,7 +60,7 @@ private final class SidebarPlaceholderViewController: NSViewController {
         stackView.spacing = 12
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerLabel = NSTextField(labelWithString: "ConnectMate")
+        let headerLabel = NSTextField(labelWithString: L10n.App.name)
         headerLabel.font = .systemFont(ofSize: 26, weight: .semibold)
         stackView.addArrangedSubview(headerLabel)
 

@@ -1,14 +1,32 @@
 import Foundation
 
 enum AppSection: String, CaseIterable {
-    case apps = "我的 App"
-    case builds = "构建版本"
-    case review = "提交审核"
-    case testFlight = "TestFlight"
-    case iap = "内购管理"
-    case settings = "设置"
+    case apps
+    case builds
+    case review
+    case testFlight
+    case iap
+    case settings
+    case logs
 
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+        case .apps:
+            return L10n.Sidebar.apps
+        case .builds:
+            return L10n.Sidebar.builds
+        case .review:
+            return L10n.Sidebar.review
+        case .testFlight:
+            return L10n.Sidebar.testFlight
+        case .iap:
+            return L10n.Sidebar.iap
+        case .settings:
+            return L10n.Sidebar.settings
+        case .logs:
+            return L10n.Sidebar.logs
+        }
+    }
 }
 
 final class AppRouter {

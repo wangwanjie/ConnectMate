@@ -2,10 +2,12 @@ import Cocoa
 
 final class AppBootstrap {
     private let router = AppRouter()
+    private let settings = AppSettings.shared
     private var mainWindowController: MainWindowController?
 
     func start() {
         NSApp.setActivationPolicy(.regular)
+        AppThemeManager.shared.applyStoredPreference(settings: settings, application: NSApp)
         if NSApp.mainMenu == nil {
             NSApp.mainMenu = makeMainMenu()
         }
@@ -26,9 +28,9 @@ final class AppBootstrap {
 
         let appMenu = NSMenu()
         appMenuItem.submenu = appMenu
-        appMenu.addItem(withTitle: "About ConnectMate", action: nil, keyEquivalent: "")
+        appMenu.addItem(withTitle: L10n.Menu.about, action: nil, keyEquivalent: "")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quit ConnectMate", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: L10n.Menu.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         return mainMenu
     }
