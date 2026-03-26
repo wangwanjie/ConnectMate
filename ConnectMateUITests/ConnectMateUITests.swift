@@ -47,6 +47,17 @@ final class ConnectMateUITests: XCTestCase {
     }
 
     @MainActor
+    func testShowsCLISetupWhenCLIIsMissing() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["CONNECTMATE_UI_TEST_MODE"] = "1"
+        app.launchEnvironment["CONNECTMATE_UI_TEST_CLI_PATH"] = "/tmp/connectmate/missing-asc"
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["CLI Setup"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["ConnectMate requires the asc CLI before it can manage App Store Connect workflows."].exists)
+    }
+
+    @MainActor
     func testExample() throws {
         // UI tests must launch the application that they test.
         let app = XCUIApplication()

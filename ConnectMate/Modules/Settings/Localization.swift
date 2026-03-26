@@ -63,6 +63,7 @@ enum L10n {
             static var retryCount: String { tr("settings.cli.retryCount") }
             static var proxyEnabled: String { tr("settings.cli.proxyEnabled") }
             static var proxyURL: String { tr("settings.cli.proxyURL") }
+            static var manageAPIKeys: String { tr("settings.cli.manageAPIKeys") }
         }
 
         enum Data {
@@ -166,5 +167,37 @@ enum L10n {
 
     enum Common {
         static var browse: String { tr("common.browse") }
+        static var save: String { tr("common.save") }
+        static var delete: String { tr("common.delete") }
+        static var validate: String { tr("common.validate") }
+        static var activate: String { tr("common.activate") }
+        static var close: String { tr("common.close") }
+    }
+
+    enum APIKeys {
+        static var title: String { tr("apikeys.title") }
+        static var profileName: String { tr("apikeys.profileName") }
+        static var issuerID: String { tr("apikeys.issuerID") }
+        static var keyID: String { tr("apikeys.keyID") }
+        static var privateKeyPath: String { tr("apikeys.privateKeyPath") }
+        static var validationSucceeded: String { tr("apikeys.validationSucceeded") }
+        static var dragHint: String { tr("apikeys.dragHint") }
+        static var emptyState: String { tr("apikeys.emptyState") }
+        static var deleteConfirm: String { tr("apikeys.deleteConfirm") }
+        static var validationFailed: String { tr("apikeys.validationFailed") }
+        static var saved: String { tr("apikeys.saved") }
+        static var active: String { tr("apikeys.active") }
+        static var statusChecking: String { tr("apikeys.statusChecking") }
+    }
+
+    enum Onboarding {
+        static var title: String { tr("onboarding.title") }
+        static var missingCLIMessage: String { tr("onboarding.missingCLIMessage") }
+        static var missingCredentialsMessage: String { tr("onboarding.missingCredentialsMessage") }
+        static var cliPath: String { tr("onboarding.cliPath") }
+        static var cliVersion: String { tr("onboarding.cliVersion") }
+        static var openPreferences: String { tr("onboarding.openPreferences") }
+        static var configureAPIKey: String { tr("onboarding.configureAPIKey") }
+        static var noVersion: String { tr("onboarding.noVersion") }
     }
 }

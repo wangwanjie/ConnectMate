@@ -29,4 +29,8 @@ struct APIKeyRecord: Codable, FetchableRecord, MutablePersistableRecord, Identif
     mutating func didInsert(_ inserted: InsertionSuccess) {
         id = inserted.rowID
     }
+
+    var displayName: String {
+        profileName ?? name
+    }
 }

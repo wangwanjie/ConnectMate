@@ -268,12 +268,14 @@ final class PreferencesViewController: NSViewController {
         proxyField.action = #selector(commitProxyURL(_:))
         proxyField.isEnabled = settings.proxyEnabled
         proxyField.identifier = NSUserInterfaceItemIdentifier("proxyField")
+        let apiKeyButton = NSButton(title: L10n.Settings.CLI.manageAPIKeys, target: self, action: #selector(openAPIKeyManager))
 
         stack.addArrangedSubview(cliRow)
         stack.addArrangedSubview(makeLabeledRow(title: L10n.Settings.CLI.commandTimeout, control: timeoutField))
         stack.addArrangedSubview(makeLabeledRow(title: L10n.Settings.CLI.retryCount, control: retryField))
         stack.addArrangedSubview(proxyEnabled)
         stack.addArrangedSubview(makeLabeledRow(title: L10n.Settings.CLI.proxyURL, control: proxyField))
+        stack.addArrangedSubview(apiKeyButton)
         return stack
     }
 
@@ -673,6 +675,11 @@ final class PreferencesViewController: NSViewController {
     @objc
     private func openFeedback() {
         presentInfo(title: L10n.Settings.About.feedback, message: L10n.Settings.About.feedbackMessage)
+    }
+
+    @objc
+    private func openAPIKeyManager() {
+        APIKeyViewController.presentAsSheet(from: view.window)
     }
 
     @objc
