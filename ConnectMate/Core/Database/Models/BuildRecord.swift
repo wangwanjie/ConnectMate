@@ -11,6 +11,8 @@ struct BuildRecord: Codable, FetchableRecord, MutablePersistableRecord, Identifi
     var version: String
     var buildNumber: String
     var processingState: String
+    var platform: String?
+    var expired: Bool
     var uploadedAt: Date?
     var rawJSON: String?
     var cachedAt: Date
@@ -23,6 +25,8 @@ struct BuildRecord: Codable, FetchableRecord, MutablePersistableRecord, Identifi
         case version
         case buildNumber = "build_number"
         case processingState = "processing_state"
+        case platform
+        case expired
         case uploadedAt = "uploaded_at"
         case rawJSON = "raw_json"
         case cachedAt = "cached_at"

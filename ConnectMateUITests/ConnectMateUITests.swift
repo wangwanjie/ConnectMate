@@ -8,7 +8,6 @@
 import XCTest
 
 final class ConnectMateUITests: XCTestCase {
-
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
 
@@ -43,7 +42,7 @@ final class ConnectMateUITests: XCTestCase {
         XCTAssertTrue(app.windows["Preferences"].waitForExistence(timeout: 3))
 
         app.buttons["构建版本"].click()
-        XCTAssertTrue(app.staticTexts["Builds"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["构建版本"].waitForExistence(timeout: 3))
     }
 
     @MainActor

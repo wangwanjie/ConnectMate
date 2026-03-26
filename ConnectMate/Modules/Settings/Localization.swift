@@ -179,6 +179,44 @@ enum L10n {
         static var loadFailed: String { tr("apps.loadFailed") }
     }
 
+    enum Builds {
+        static var title: String { tr("builds.title") }
+        static var appFilter: String { tr("builds.appFilter") }
+        static var selectApp: String { tr("builds.selectApp") }
+        static var refresh: String { tr("builds.refresh") }
+        static var expireSelected: String { tr("builds.expireSelected") }
+        static var loading: String { tr("builds.loading") }
+        static var emptyAppsTitle: String { tr("builds.emptyAppsTitle") }
+        static var emptyAppsDetail: String { tr("builds.emptyAppsDetail") }
+        static var emptyBuildsTitle: String { tr("builds.emptyBuildsTitle") }
+        static var emptyBuildsDetail: String { tr("builds.emptyBuildsDetail") }
+        static var loadFailed: String { tr("builds.loadFailed") }
+        static var version: String { tr("builds.version") }
+        static var buildNumber: String { tr("builds.buildNumber") }
+        static var status: String { tr("builds.status") }
+        static var platform: String { tr("builds.platform") }
+        static var uploadedAt: String { tr("builds.uploadedAt") }
+        static var cachedAt: String { tr("builds.cachedAt") }
+        static var buildID: String { tr("builds.buildID") }
+        static var appID: String { tr("builds.appID") }
+        static var expired: String { tr("builds.expired") }
+        static var noSelectionTitle: String { tr("builds.noSelectionTitle") }
+        static var noSelectionDetail: String { tr("builds.noSelectionDetail") }
+        static var unavailable: String { tr("builds.unavailable") }
+        static var expireTaskTitle: String { tr("builds.expireTaskTitle") }
+        static var expireTaskDetail: String { tr("builds.expireTaskDetail") }
+        static var expireSucceeded: String { tr("builds.expireSucceeded") }
+        static var expireFailed: String { tr("builds.expireFailed") }
+
+        enum Status {
+            static var processing: String { tr("builds.status.processing") }
+            static var valid: String { tr("builds.status.valid") }
+            static var invalid: String { tr("builds.status.invalid") }
+            static var expired: String { tr("builds.status.expired") }
+            static var unknown: String { tr("builds.status.unknown") }
+        }
+    }
+
     enum Tasking {
         static var noActiveTasks: String { tr("tasking.noActiveTasks") }
         static var activeTaskCount: String { tr("tasking.activeTaskCount") }

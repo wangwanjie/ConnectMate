@@ -44,6 +44,8 @@ extension DatabaseMigrator {
                 table.column("version", .text).notNull()
                 table.column("build_number", .text).notNull()
                 table.column("processing_state", .text).notNull()
+                table.column("platform", .text)
+                table.column("expired", .boolean).notNull().defaults(to: false)
                 table.column("uploaded_at", .datetime)
                 table.column("raw_json", .text)
                 table.column("cached_at", .datetime).notNull()
@@ -119,6 +121,24 @@ extension DatabaseMigrator {
             }
 
             try db.create(index: "idx_command_logs_executed_at", on: "command_logs", columns: ["executed_at"])
+        }
+
+        migrator.registerMigration("extendBuildsWithMetadata") { db in
+            let columns = Set(try Row
+                .fetchAll(db, sql: "PRAGMA table_info(builds)")
+                .compactMap { row in row["name"] as String? })
+
+            if !columns.contains("platform") {
+                try db.alter(table: "builds") { table in
+                    table.add(column: "platform", .text)
+                }
+            }
+
+            if !columns.contains("expired") {
+                try db.alter(table: "builds") { table in
+                    table.add(column: "expired", .boolean).notNull().defaults(to: false)
+                }
+            }
         }
 
         return migrator

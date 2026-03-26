@@ -13,11 +13,16 @@ struct DatabaseMigrationTests {
             let hasApps = try db.tableExists("apps")
             let hasBuilds = try db.tableExists("builds")
             let hasCommandLogs = try db.tableExists("command_logs")
+            let buildColumns = Set(try Row
+                .fetchAll(db, sql: "PRAGMA table_info(builds)")
+                .compactMap { row in row["name"] as String? })
 
             #expect(hasAPIKeys)
             #expect(hasApps)
             #expect(hasBuilds)
             #expect(hasCommandLogs)
+            #expect(buildColumns.contains("platform"))
+            #expect(buildColumns.contains("expired"))
         }
     }
 }

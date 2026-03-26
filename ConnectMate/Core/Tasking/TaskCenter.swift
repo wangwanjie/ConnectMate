@@ -1,7 +1,14 @@
 import Foundation
 
 @MainActor
-final class TaskCenter {
+protocol BuildTaskReporting: AnyObject {
+    func startTask(title: String, detail: String) -> UUID
+    func updateTask(id: UUID, detail: String?, fractionCompleted: Double?, state: TaskState?)
+    func finishTask(id: UUID, state: TaskState, detail: String?)
+}
+
+@MainActor
+final class TaskCenter: BuildTaskReporting {
     static let shared = TaskCenter()
     static let didUpdateNotification = Notification.Name("ConnectMate.TaskCenter.didUpdate")
 

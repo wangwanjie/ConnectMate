@@ -8,10 +8,18 @@ final class MainSplitViewController: NSSplitViewController {
     private let listController = PaneHostViewController(role: .list)
     private let detailController = PaneHostViewController(role: .detail)
     private lazy var appDetailController = AppDetailViewController()
+    private lazy var buildDetailController = BuildDetailViewController()
     private lazy var appListController: AppListViewController = {
         let controller = AppListViewController()
         controller.onSelectApp = { [weak self] app in
             self?.appDetailController.render(app: app)
+        }
+        return controller
+    }()
+    private lazy var buildListController: BuildListViewController = {
+        let controller = BuildListViewController()
+        controller.onSelectBuild = { [weak self] build in
+            self?.buildDetailController.render(build: build)
         }
         return controller
     }()
@@ -61,6 +69,9 @@ final class MainSplitViewController: NSSplitViewController {
         case .apps:
             listController.display(appListController)
             detailController.display(appDetailController)
+        case .builds:
+            listController.display(buildListController)
+            detailController.display(buildDetailController)
         default:
             let list = ModulePaneViewController(role: .list)
             list.render(
