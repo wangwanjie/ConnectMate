@@ -23,6 +23,17 @@ final class ConnectMateUITests: XCTestCase {
     }
 
     @MainActor
+    func testLaunchesIntoThreePaneShell() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["CONNECTMATE_UI_TEST_MODE"] = "1"
+        app.launch()
+
+        XCTAssertTrue(app.splitGroups.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["我的 App"].exists)
+        XCTAssertTrue(app.staticTexts["设置"].exists)
+    }
+
+    @MainActor
     func testExample() throws {
         // UI tests must launch the application that they test.
         let app = XCUIApplication()
