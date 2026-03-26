@@ -3,10 +3,12 @@ import Cocoa
 final class AppBootstrap {
     private let router = AppRouter()
     private let settings = AppSettings.shared
+    private let databaseManager = DatabaseManager.shared
     private var mainWindowController: MainWindowController?
 
     func start() {
         NSApp.setActivationPolicy(.regular)
+        _ = databaseManager
         AppThemeManager.shared.applyStoredPreference(settings: settings, application: NSApp)
         if NSApp.mainMenu == nil {
             NSApp.mainMenu = makeMainMenu()

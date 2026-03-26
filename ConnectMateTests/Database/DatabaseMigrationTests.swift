@@ -1,0 +1,23 @@
+import GRDB
+import Testing
+@testable import ConnectMate
+
+struct DatabaseMigrationTests {
+    @Test
+    func migrationsCreateCoreTables() throws {
+        let dbQueue = try DatabaseQueue()
+        try DatabaseMigrator.connectMate.migrate(dbQueue)
+
+        try dbQueue.read { db in
+            let hasAPIKeys = try db.tableExists("api_keys")
+            let hasApps = try db.tableExists("apps")
+            let hasBuilds = try db.tableExists("builds")
+            let hasCommandLogs = try db.tableExists("command_logs")
+
+            #expect(hasAPIKeys)
+            #expect(hasApps)
+            #expect(hasBuilds)
+            #expect(hasCommandLogs)
+        }
+    }
+}
