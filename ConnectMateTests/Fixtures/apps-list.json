@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "type": "apps",
+      "id": "123456789",
+      "attributes": {
+        "name": "First App",
+        "bundleId": "com.example.first",
+        "sku": "FIRST001"
+      }
+    },
+    {
+      "type": "apps",
+      "id": "987654321",
+      "attributes": {
+        "name": "Second App",
+        "bundleId": "com.example.second",
+        "sku": "SECOND001"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/apps"
+  }
+}

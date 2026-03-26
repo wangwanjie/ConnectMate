@@ -1,0 +1,73 @@
+{
+  "data": [
+    {
+      "type": "builds",
+      "id": "build-001",
+      "attributes": {
+        "version": "42",
+        "uploadedDate": "2026-03-27T10:00:00Z",
+        "processingState": "VALID",
+        "expired": false
+      },
+      "relationships": {
+        "preReleaseVersion": {
+          "data": {
+            "type": "preReleaseVersions",
+            "id": "prv-001"
+          }
+        },
+        "app": {
+          "data": {
+            "type": "apps",
+            "id": "123456789"
+          }
+        }
+      }
+    },
+    {
+      "type": "builds",
+      "id": "build-002",
+      "attributes": {
+        "version": "43",
+        "uploadedDate": "2026-03-27T12:00:00Z",
+        "processingState": "PROCESSING",
+        "expired": false
+      },
+      "relationships": {
+        "preReleaseVersion": {
+          "data": {
+            "type": "preReleaseVersions",
+            "id": "prv-002"
+          }
+        },
+        "app": {
+          "data": {
+            "type": "apps",
+            "id": "123456789"
+          }
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "preReleaseVersions",
+      "id": "prv-001",
+      "attributes": {
+        "version": "1.2.3",
+        "platform": "MAC_OS"
+      }
+    },
+    {
+      "type": "preReleaseVersions",
+      "id": "prv-002",
+      "attributes": {
+        "version": "1.2.4",
+        "platform": "IOS"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/builds"
+  }
+}

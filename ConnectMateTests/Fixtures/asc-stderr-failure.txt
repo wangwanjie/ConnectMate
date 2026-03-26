@@ -1,0 +1,2 @@
+Error: apps: missing authentication. Run 'asc auth login' or create /Users/VanJay/.asc/config.json (see 'asc auth init')
+Hint: Run `asc auth login` or `asc auth init` (or set ASC_KEY_ID/ASC_ISSUER_ID/ASC_PRIVATE_KEY_PATH). Try `asc auth doctor` if you're unsure what's misconfigured.
