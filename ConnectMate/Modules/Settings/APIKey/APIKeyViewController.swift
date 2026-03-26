@@ -108,6 +108,7 @@ final class APIKeyViewController: NSViewController, NSTableViewDataSource, NSTab
 
         dropView.onPathChange = { [weak self] path in
             self?.dropView.filePath = path
+            self?.applySuggestedValues(forPrivateKeyPath: path)
         }
 
         let validateButton = NSButton(title: L10n.Common.validate, target: self, action: #selector(validateProfile))
@@ -243,6 +244,19 @@ final class APIKeyViewController: NSViewController, NSTableViewDataSource, NSTab
             issuerField.stringValue = first.issuerID
             keyIDField.stringValue = first.keyID
             dropView.filePath = first.p8Path
+        }
+    }
+
+    private func applySuggestedValues(forPrivateKeyPath path: String) {
+        guard let inferredKeyID = APIKeyService.inferredKeyID(from: path) else {
+            return
+        }
+
+        if keyIDField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            keyIDField.stringValue = inferredKeyID
+        }
+        if nameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            nameField.stringValue = inferredKeyID
         }
     }
 

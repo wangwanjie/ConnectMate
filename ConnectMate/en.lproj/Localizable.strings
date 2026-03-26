@@ -106,6 +106,8 @@
 "apikeys.saved" = "API key profile saved.";
 "apikeys.active" = "Active";
 "apikeys.statusChecking" = "Checking status…";
+"apikeys.missingRequiredFields" = "Please complete: %@.";
+"apikeys.privateKeyFileMissing" = "The private key file could not be found at %@.";
 "onboarding.title" = "CLI Setup";
 "onboarding.missingCLIMessage" = "ConnectMate requires the asc CLI before it can manage App Store Connect workflows.";
 "onboarding.missingCredentialsMessage" = "ConnectMate detected the asc CLI, but no API key profile is configured yet.";

@@ -207,6 +207,8 @@ enum L10n {
         static var saved: String { tr("apikeys.saved") }
         static var active: String { tr("apikeys.active") }
         static var statusChecking: String { tr("apikeys.statusChecking") }
+        static var missingRequiredFields: String { tr("apikeys.missingRequiredFields") }
+        static var privateKeyFileMissing: String { tr("apikeys.privateKeyFileMissing") }
     }
 
     enum Onboarding {
