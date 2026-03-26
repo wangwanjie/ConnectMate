@@ -1,6 +1,6 @@
 import Cocoa
 
-final class AppBootstrap {
+final class AppBootstrap: NSObject {
     private let router = AppRouter()
     private let settings = AppSettings.shared
     private let databaseManager = DatabaseManager.shared
@@ -31,9 +31,16 @@ final class AppBootstrap {
         let appMenu = NSMenu()
         appMenuItem.submenu = appMenu
         appMenu.addItem(withTitle: L10n.Menu.about, action: nil, keyEquivalent: "")
+        let preferencesItem = appMenu.addItem(withTitle: L10n.Menu.preferences, action: #selector(openPreferences), keyEquivalent: ",")
+        preferencesItem.target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: L10n.Menu.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         return mainMenu
+    }
+
+    @objc
+    private func openPreferences() {
+        SettingsWindowController.shared.present()
     }
 }

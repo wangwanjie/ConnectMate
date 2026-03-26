@@ -1,18 +1,20 @@
 import Cocoa
+import SnapKit
 
 final class MainSplitViewController: NSSplitViewController {
-    init(router: AppRouter) {
-        super.init(nibName: nil, bundle: nil)
+    private let router: AppRouter
+    private let settings: AppSettings
+    private let sidebarController: SidebarViewController
+    private let listController = ModulePaneViewController(role: .list)
+    private let detailController = ModulePaneViewController(role: .detail)
 
-        let sidebarController = SidebarPlaceholderViewController(sections: router.sections)
-        let listController = PanePlaceholderViewController(
-            title: "List",
-            subtitle: "ConnectMate will render module lists here."
+    init(router: AppRouter, settings: AppSettings) {
+        self.router = router
+        self.settings = settings
+        self.sidebarController = SidebarViewController(
+            items: router.sections.map(SidebarItem.init(section:))
         )
-        let detailController = PanePlaceholderViewController(
-            title: "Detail",
-            subtitle: "ConnectMate will render module detail content here."
-        )
+        super.init(nibName: nil, bundle: nil)
 
         let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarController)
         sidebarItem.minimumThickness = 180
@@ -28,70 +30,57 @@ final class MainSplitViewController: NSSplitViewController {
         addSplitViewItem(sidebarItem)
         addSplitViewItem(listItem)
         addSplitViewItem(detailItem)
-    }
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-private final class SidebarPlaceholderViewController: NSViewController {
-    private let sections: [AppSection]
-
-    init(sections: [AppSection]) {
-        self.sections = sections
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-
-        let stackView = NSStackView()
-        stackView.orientation = .vertical
-        stackView.alignment = .leading
-        stackView.spacing = 12
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-
-        let headerLabel = NSTextField(labelWithString: L10n.App.name)
-        headerLabel.font = .systemFont(ofSize: 26, weight: .semibold)
-        stackView.addArrangedSubview(headerLabel)
-
-        let separator = NSBox()
-        separator.boxType = .separator
-        stackView.addArrangedSubview(separator)
-
-        for section in sections {
-            let label = NSTextField(labelWithString: section.title)
-            label.font = .systemFont(ofSize: 14, weight: .medium)
-            label.setContentCompressionResistancePriority(.required, for: .vertical)
-            stackView.addArrangedSubview(label)
+        sidebarController.onSelectSection = { [weak self] section in
+            self?.show(section: section)
+        }
+        sidebarController.onOpenPreferences = {
+            SettingsWindowController.shared.present()
         }
 
-        view.addSubview(stackView)
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 28),
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20)
-        ])
+        let initialSection = router.initialSection(for: settings)
+        sidebarController.select(section: initialSection)
+        show(section: initialSection)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func show(section: AppSection) {
+        listController.render(
+            title: section.contentTitle,
+            detail: String(format: L10n.Modules.listDescription, section.title)
+        )
+        detailController.render(
+            title: "\(section.contentTitle) Detail",
+            detail: String(format: L10n.Modules.detailDescription, section.title)
+        )
     }
 }
 
-private final class PanePlaceholderViewController: NSViewController {
-    private let titleText: String
-    private let subtitleText: String
+private enum ModulePaneRole {
+    case list
+    case detail
+}
 
-    init(title: String, subtitle: String) {
-        self.titleText = title
-        self.subtitleText = subtitle
+private final class ModulePaneViewController: NSViewController {
+    private let role: ModulePaneRole
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let subtitleLabel = NSTextField(wrappingLabelWithString: "")
+    private let emptyStateView = EmptyStateView(symbolName: "square.stack.3d.up", title: "", detail: "")
+    private let taskLabel = NSTextField(labelWithString: "")
+
+    init(role: ModulePaneRole) {
+        self.role = role
         super.init(nibName: nil, bundle: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleTaskCenterUpdate),
+            name: TaskCenter.didUpdateNotification,
+            object: nil
+        )
     }
 
     @available(*, unavailable)
@@ -102,27 +91,68 @@ private final class PanePlaceholderViewController: NSViewController {
     override func loadView() {
         view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        view.layer?.backgroundColor = (role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor).cgColor
 
-        let titleLabel = NSTextField(labelWithString: titleText)
         titleLabel.font = .systemFont(ofSize: 28, weight: .semibold)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let subtitleLabel = NSTextField(wrappingLabelWithString: subtitleText)
         subtitleLabel.font = .systemFont(ofSize: 14)
         subtitleLabel.textColor = .secondaryLabelColor
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.maximumNumberOfLines = 2
+
+        taskLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        taskLabel.textColor = .tertiaryLabelColor
 
         view.addSubview(titleLabel)
         view.addSubview(subtitleLabel)
+        view.addSubview(emptyStateView)
+        view.addSubview(taskLabel)
 
-        NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 28),
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(28)
+            make.leading.equalToSuperview().offset(28)
+            make.trailing.lessThanOrEqualToSuperview().inset(28)
+        }
 
-            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -28)
-        ])
+        subtitleLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.leading.equalTo(titleLabel)
+            make.trailing.lessThanOrEqualToSuperview().inset(28)
+        }
+
+        emptyStateView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.leading.greaterThanOrEqualToSuperview().offset(24)
+            make.trailing.lessThanOrEqualToSuperview().inset(24)
+        }
+
+        taskLabel.snp.makeConstraints { make in
+            make.leading.equalTo(titleLabel)
+            make.bottom.equalToSuperview().inset(18)
+            make.trailing.lessThanOrEqualToSuperview().inset(28)
+        }
+
+        updateTaskFooter()
+    }
+
+    func render(title: String, detail: String) {
+        titleLabel.stringValue = title
+        subtitleLabel.stringValue = detail
+        emptyStateView.update(
+            symbolName: role == .list ? "line.3.horizontal.decrease.circle" : "sidebar.right",
+            title: title,
+            detail: detail
+        )
+    }
+
+    @objc
+    private func handleTaskCenterUpdate() {
+        updateTaskFooter()
+    }
+
+    private func updateTaskFooter() {
+        let activeCount = TaskCenter.shared.activeTasks().count
+        taskLabel.stringValue = activeCount == 0
+            ? L10n.Tasking.noActiveTasks
+            : String(format: L10n.Tasking.activeTaskCount, activeCount)
     }
 }

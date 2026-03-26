@@ -29,8 +29,21 @@ final class ConnectMateUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.splitGroups.firstMatch.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["我的 App"].exists)
-        XCTAssertTrue(app.staticTexts["设置"].exists)
+        XCTAssertTrue(app.buttons["我的 App"].exists)
+        XCTAssertTrue(app.buttons["设置"].exists)
+    }
+
+    @MainActor
+    func testCanOpenPreferencesAndSelectBuildsModule() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["CONNECTMATE_UI_TEST_MODE"] = "1"
+        app.launch()
+
+        app.buttons["设置"].click()
+        XCTAssertTrue(app.windows["Preferences"].waitForExistence(timeout: 3))
+
+        app.buttons["构建版本"].click()
+        XCTAssertTrue(app.staticTexts["Builds"].waitForExistence(timeout: 3))
     }
 
     @MainActor

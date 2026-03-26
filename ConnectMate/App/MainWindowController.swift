@@ -2,7 +2,7 @@ import Cocoa
 
 final class MainWindowController: NSWindowController {
     init(router: AppRouter) {
-        let splitViewController = MainSplitViewController(router: router)
+        let splitViewController = MainSplitViewController(router: router, settings: .shared)
         let window = NSWindow(contentViewController: splitViewController)
         window.title = L10n.App.name
         window.setContentSize(NSSize(width: 1360, height: 840))

@@ -27,8 +27,65 @@ enum AppSection: String, CaseIterable {
             return L10n.Sidebar.logs
         }
     }
+
+    var contentTitle: String {
+        switch self {
+        case .apps:
+            return "Apps"
+        case .builds:
+            return "Builds"
+        case .review:
+            return "Review"
+        case .testFlight:
+            return "TestFlight"
+        case .iap:
+            return "In-App Purchases"
+        case .settings:
+            return "Settings"
+        case .logs:
+            return "Logs"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .apps:
+            return "app.badge"
+        case .builds:
+            return "shippingbox"
+        case .review:
+            return "paperplane"
+        case .testFlight:
+            return "person.3"
+        case .iap:
+            return "dollarsign.circle"
+        case .settings:
+            return "gearshape"
+        case .logs:
+            return "text.justify"
+        }
+    }
 }
 
 final class AppRouter {
-    let sections = AppSection.allCases
+    let sections: [AppSection] = [.apps, .builds, .review, .testFlight, .iap, .logs]
+
+    func initialSection(for settings: AppSettings) -> AppSection {
+        switch settings.defaultLaunchSection {
+        case .apps:
+            return .apps
+        case .builds:
+            return .builds
+        case .review:
+            return .review
+        case .testFlight:
+            return .testFlight
+        case .iap:
+            return .iap
+        case .settings:
+            return .apps
+        case .logs:
+            return .logs
+        }
+    }
 }
