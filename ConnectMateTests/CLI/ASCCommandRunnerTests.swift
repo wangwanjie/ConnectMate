@@ -5,6 +5,20 @@ import Testing
 
 struct ASCCommandRunnerTests {
     @Test
+    func runnerCanExecuteInstalledASCCLI() async throws {
+        let path = "/usr/local/bin/asc"
+        guard FileManager.default.fileExists(atPath: path) else {
+            return
+        }
+
+        let runner = ASCCommandRunner(configuration: .init(cliPath: path, timeout: 5, retryCount: 1))
+        let result = try await runner.run(arguments: ["version"])
+
+        #expect(result.exitCode == 0)
+        #expect(result.standardOutput.contains("0."))
+    }
+
+    @Test
     func runnerCapturesStdoutAndInjectedEnvironment() async throws {
         let configuration = ASCCommandConfiguration(
             cliPath: "/bin/sh",

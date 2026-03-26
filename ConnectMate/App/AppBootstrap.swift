@@ -7,6 +7,14 @@ final class AppBootstrap: NSObject {
     private var mainWindowController: MainWindowController?
 
     func start() {
+        let environment = ProcessInfo.processInfo.environment
+        let isUITestMode = environment["CONNECTMATE_UI_TEST_MODE"] == "1"
+        let isRunningHostedTests = environment["XCTestConfigurationFilePath"] != nil
+
+        guard !isRunningHostedTests || isUITestMode else {
+            return
+        }
+
         NSApp.setActivationPolicy(.regular)
         _ = databaseManager
         AppThemeManager.shared.applyStoredPreference(settings: settings, application: NSApp)
@@ -72,7 +80,10 @@ final class AppBootstrap: NSObject {
         }
 
         let commandConfiguration = ASCCommandConfiguration(
-            settings: settings,
+            cliPath: effectiveCLIPath,
+            timeout: TimeInterval(settings.commandTimeout),
+            retryCount: settings.apiRetryCount,
+            proxyURL: settings.proxyEnabled ? settings.proxyURL : nil,
             workingDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         )
         let runner = ASCCommandRunner(configuration: commandConfiguration, logRepository: databaseManager.commandLogRepository)
