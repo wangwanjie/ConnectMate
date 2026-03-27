@@ -61,7 +61,7 @@ struct ASCCommandConfiguration: Sendable, Equatable {
         if let apiKey {
             resolved["ASC_KEY_ID"] = apiKey.keyID
             resolved["ASC_ISSUER_ID"] = apiKey.issuerID
-            resolved["ASC_PRIVATE_KEY_PATH"] = apiKey.p8Path
+            resolved["ASC_PRIVATE_KEY_PATH"] = apiKey.resolvedP8Path
 
             if resolved["ASC_PROFILE"] == nil, let profileName = apiKey.profileName?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty {
                 resolved["ASC_PROFILE"] = profileName
@@ -81,6 +81,7 @@ struct ASCCommandConfiguration: Sendable, Equatable {
             lhs.apiKey?.issuerID == rhs.apiKey?.issuerID &&
             lhs.apiKey?.keyID == rhs.apiKey?.keyID &&
             lhs.apiKey?.p8Path == rhs.apiKey?.p8Path &&
+            lhs.apiKey?.p8Bookmark == rhs.apiKey?.p8Bookmark &&
             lhs.apiKey?.profileName == rhs.apiKey?.profileName &&
             lhs.workingDirectory == rhs.workingDirectory &&
             lhs.environment == rhs.environment

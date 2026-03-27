@@ -21,6 +21,7 @@ struct DatabaseMigrationTests {
             #expect(hasApps)
             #expect(hasBuilds)
             #expect(hasCommandLogs)
+            #expect(Set(try Row.fetchAll(db, sql: "PRAGMA table_info(api_keys)").compactMap { row in row["name"] as String? }).contains("p8_bookmark"))
             #expect(buildColumns.contains("platform"))
             #expect(buildColumns.contains("expired"))
         }

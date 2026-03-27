@@ -12,6 +12,7 @@ extension DatabaseMigrator {
                 table.column("issuer_id", .text).notNull()
                 table.column("key_id", .text).notNull()
                 table.column("p8_path", .text).notNull()
+                table.column("p8_bookmark", .blob)
                 table.column("profile_name", .text)
                 table.column("is_active", .boolean).notNull().defaults(to: false)
                 table.column("last_verified_at", .datetime)
@@ -137,6 +138,18 @@ extension DatabaseMigrator {
             if !columns.contains("expired") {
                 try db.alter(table: "builds") { table in
                     table.add(column: "expired", .boolean).notNull().defaults(to: false)
+                }
+            }
+        }
+
+        migrator.registerMigration("addAPIKeyBookmarks") { db in
+            let columns = Set(try Row
+                .fetchAll(db, sql: "PRAGMA table_info(api_keys)")
+                .compactMap { row in row["name"] as String? })
+
+            if !columns.contains("p8_bookmark") {
+                try db.alter(table: "api_keys") { table in
+                    table.add(column: "p8_bookmark", .blob)
                 }
             }
         }

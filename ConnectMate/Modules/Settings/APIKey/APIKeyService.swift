@@ -100,6 +100,11 @@ final class APIKeyService {
             try APIKeyRecord
                 .order(Column("is_active").desc, Column("name").asc)
                 .fetchAll(db)
+                .map { record in
+                    var resolvedRecord = record
+                    resolvedRecord.p8Path = record.resolvedP8Path
+                    return resolvedRecord
+                }
         }
     }
 
@@ -124,6 +129,7 @@ final class APIKeyService {
             issuerID: input.issuerID,
             keyID: input.keyID,
             p8Path: input.privateKeyPath,
+            p8Bookmark: BookmarkedFileReference.makeBookmark(for: input.privateKeyPath),
             profileName: input.name,
             isActive: activate,
             lastVerifiedAt: nil,

@@ -9,6 +9,7 @@ struct APIKeyRecord: Codable, FetchableRecord, MutablePersistableRecord, Identif
     var issuerID: String
     var keyID: String
     var p8Path: String
+    var p8Bookmark: Data?
     var profileName: String?
     var isActive: Bool
     var lastVerifiedAt: Date?
@@ -20,6 +21,7 @@ struct APIKeyRecord: Codable, FetchableRecord, MutablePersistableRecord, Identif
         case issuerID = "issuer_id"
         case keyID = "key_id"
         case p8Path = "p8_path"
+        case p8Bookmark = "p8_bookmark"
         case profileName = "profile_name"
         case isActive = "is_active"
         case lastVerifiedAt = "last_verified_at"
@@ -32,5 +34,9 @@ struct APIKeyRecord: Codable, FetchableRecord, MutablePersistableRecord, Identif
 
     var displayName: String {
         profileName ?? name
+    }
+
+    var resolvedP8Path: String {
+        BookmarkedFileReference.resolvePath(path: p8Path, bookmarkData: p8Bookmark)
     }
 }

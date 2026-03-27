@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import Testing
 @testable import ConnectMate
 
@@ -76,6 +77,34 @@ struct APIKeyServiceTests {
             "--private-key", privateKeyURL.path,
             "--network"
         ])
+    }
+
+    @Test
+    func saveProfileStoresBookmarkDataForPrivateKey() throws {
+        let dbQueue = try DatabaseQueue()
+        try DatabaseMigrator.connectMate.migrate(dbQueue)
+        let runner = CapturingAPIRunner()
+        let service = APIKeyService(runner: runner, dbWriter: dbQueue)
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+
+        let privateKeyURL = temporaryDirectory.appendingPathComponent("AuthKey_BOOKMARK.p8")
+        try Data("PRIVATE KEY".utf8).write(to: privateKeyURL)
+
+        _ = try service.saveProfile(
+            name: "Bookmark",
+            issuerID: "ISSUER",
+            keyID: "BOOKMARK",
+            privateKeyPath: privateKeyURL.path,
+            activate: true
+        )
+
+        let savedProfiles = try service.fetchProfiles()
+        #expect(savedProfiles.count == 1)
+        #expect(savedProfiles[0].p8Bookmark != nil)
+        #expect(savedProfiles[0].p8Path == privateKeyURL.path)
     }
 }
 

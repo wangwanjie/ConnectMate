@@ -96,4 +96,36 @@ struct ASCCommandRunnerTests {
         #expect(logs[0].status == "success")
         #expect(logs[0].stdoutText.contains("logged"))
     }
+
+    @Test
+    func configurationResolvesPrivateKeyPathFromBookmark() throws {
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+
+        let originalURL = temporaryDirectory.appendingPathComponent("AuthKey_ORIGINAL.p8")
+        let movedURL = temporaryDirectory.appendingPathComponent("AuthKey_MOVED.p8")
+        try Data("PRIVATE KEY".utf8).write(to: originalURL)
+        let bookmarkData = BookmarkedFileReference.makeBookmark(for: originalURL.path)
+        try FileManager.default.moveItem(at: originalURL, to: movedURL)
+
+        let record = APIKeyRecord(
+            id: 1,
+            name: "Moved",
+            issuerID: "ISSUER",
+            keyID: "KEY",
+            p8Path: originalURL.path,
+            p8Bookmark: bookmarkData,
+            profileName: "Moved",
+            isActive: true,
+            lastVerifiedAt: nil,
+            lastValidationStatus: nil
+        )
+
+        let configuration = ASCCommandConfiguration(apiKey: record)
+        let environment = configuration.resolvedEnvironment()
+
+        #expect(environment["ASC_PRIVATE_KEY_PATH"] == movedURL.standardizedFileURL.path)
+    }
 }
