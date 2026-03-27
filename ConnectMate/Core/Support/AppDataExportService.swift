@@ -2,14 +2,29 @@ import Foundation
 import GRDB
 
 struct AppDataExportService {
+    static let exportedTableNames = [
+        "api_keys",
+        "apps",
+        "builds",
+        "review_submissions",
+        "testers",
+        "beta_groups",
+        "iap_products",
+        "command_logs"
+    ]
+
     private let dbWriter: any DatabaseWriter
 
-    init(dbWriter: any DatabaseWriter = DatabaseManager.shared.dbQueue) {
-        self.dbWriter = dbWriter
+    init(dbWriter: (any DatabaseWriter)? = nil) {
+        self.dbWriter = dbWriter ?? DatabaseManager.shared.dbQueue
     }
 
     func exportAllData() throws -> URL {
         let exportURL = try makeExportURL(prefix: "ConnectMate-export", pathExtension: "json")
+        return try exportAllData(to: exportURL)
+    }
+
+    func exportAllData(to exportURL: URL) throws -> URL {
         let payload = try dbWriter.read { db -> [String: [[String: String]]] in
             func fetchTable(_ name: String) throws -> [[String: String]] {
                 try Row.fetchAll(db, sql: "SELECT * FROM \(name)").map { row in
@@ -34,6 +49,8 @@ struct AppDataExportService {
         }
 
         let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
+        let directoryURL = exportURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         try data.write(to: exportURL)
         return exportURL
     }

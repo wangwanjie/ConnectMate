@@ -1,6 +1,6 @@
 import Foundation
 
-struct ASCAppPayload: Equatable, Sendable {
+nonisolated struct ASCAppPayload: Equatable, Sendable {
     let id: String
     let name: String
     let bundleID: String
@@ -11,7 +11,7 @@ struct ASCAppPayload: Equatable, Sendable {
     let rawJSON: String?
 }
 
-struct ASCBuildPayload: Equatable, Sendable {
+nonisolated struct ASCBuildPayload: Equatable, Sendable {
     let id: String
     let appID: String
     let version: String
@@ -23,7 +23,7 @@ struct ASCBuildPayload: Equatable, Sendable {
     let rawJSON: String?
 }
 
-struct ASCOutputParser {
+nonisolated struct ASCOutputParser {
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
@@ -155,16 +155,16 @@ struct ASCOutputParser {
     }()
 }
 
-private struct AppListResponse: Codable {
+private nonisolated struct AppListResponse: Codable {
     let data: [AppResource]
 }
 
-private struct AppResource: Codable {
+private nonisolated struct AppResource: Codable {
     let id: String
     let attributes: AppAttributes
 }
 
-private struct AppAttributes: Codable {
+private nonisolated struct AppAttributes: Codable {
     let name: String
     let bundleID: String
     let sku: String?
@@ -182,38 +182,38 @@ private struct AppAttributes: Codable {
     }
 }
 
-private struct BuildListResponse: Codable {
+private nonisolated struct BuildListResponse: Codable {
     let data: [BuildResource]
     let included: [PreReleaseVersionResource]
 }
 
-private struct BuildResource: Codable {
+private nonisolated struct BuildResource: Codable {
     let id: String
     let attributes: BuildAttributes
     let relationships: BuildRelationships?
 }
 
-private struct BuildAttributes: Codable {
+private nonisolated struct BuildAttributes: Codable {
     let version: String
     let uploadedDate: String?
     let processingState: String?
     let expired: Bool?
 }
 
-private struct BuildRelationships: Codable {
+private nonisolated struct BuildRelationships: Codable {
     let preReleaseVersion: Relationship?
     let app: Relationship?
 }
 
-private struct Relationship: Codable {
+private nonisolated struct Relationship: Codable {
     let data: RelationshipData?
 }
 
-private struct RelationshipData: Codable {
+private nonisolated struct RelationshipData: Codable {
     let id: String
 }
 
-private struct PreReleaseVersionResource: Codable {
+private nonisolated struct PreReleaseVersionResource: Codable {
     let id: String
     let attributes: PreReleaseVersionAttributes
 }

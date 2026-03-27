@@ -51,9 +51,22 @@
 		E9AB2F601C5FBBB94214D461 /* Pods-ConnectMate.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ConnectMate.debug.xcconfig"; path = "Target Support Files/Pods-ConnectMate/Pods-ConnectMate.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9A73F4012F75A10000CD96C9 /* Exceptions for "ConnectMate" folder in "ConnectMate" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 956CEEDD2F758BC900CD96C9 /* ConnectMate */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		956CEEE02F758BC900CD96C9 /* ConnectMate */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9A73F4012F75A10000CD96C9 /* Exceptions for "ConnectMate" folder in "ConnectMate" target */,
+			);
 			path = ConnectMate;
 			sourceTree = "<group>";
 		};
@@ -538,7 +551,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_FILE = ConnectMate/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -571,7 +584,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_FILE = ConnectMate/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

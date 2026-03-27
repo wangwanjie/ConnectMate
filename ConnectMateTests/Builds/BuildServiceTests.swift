@@ -52,6 +52,35 @@ struct BuildServiceTests {
         #expect(reporter.startedTaskTitle == "Expire Builds")
         #expect(reporter.finishedStates == [.succeeded])
     }
+
+    @Test
+    func createVersionBuildsExpectedArguments() async throws {
+        let dbQueue = try DatabaseQueue()
+        try DatabaseMigrator.connectMate.migrate(dbQueue)
+
+        let runner = CapturingBuildRunner()
+        let service = BuildService(
+            runner: runner,
+            repository: BuildRepository(dbWriter: dbQueue),
+            activeProfileProvider: { nil }
+        )
+
+        _ = try await service.createVersion(
+            .init(
+                appID: "123456789",
+                versionString: "2.0.0",
+                platform: "MAC_OS"
+            )
+        )
+
+        #expect(runner.capturedArguments.last == [
+            "versions", "create",
+            "--app", "123456789",
+            "--version", "2.0.0",
+            "--platform", "MAC_OS",
+            "--output", "json"
+        ])
+    }
 }
 
 private struct FixtureBuildRunner: ASCCommandRunning {

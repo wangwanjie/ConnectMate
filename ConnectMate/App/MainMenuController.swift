@@ -12,6 +12,7 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
         case review
         case testFlight
         case iap
+        case signing
         case logs
         case themeSystem = 200
         case themeLight
@@ -23,6 +24,8 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
     private let showMainWindow: () -> Void
     private let openPreferences: () -> Void
     private let openAPIKeys: () -> Void
+    private let createApp: () -> Void
+    private let addVersion: () -> Void
     private let exportAllData: () -> Void
     private let exportCommandLogs: () -> Void
     private let showAcknowledgements: () -> Void
@@ -32,11 +35,13 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
     private let currentSection: () -> AppSection?
 
     init(
-        settings: AppSettings = .shared,
-        updateManager: any AppUpdateManaging = AppUpdateManager.shared,
+        settings: AppSettings? = nil,
+        updateManager: (any AppUpdateManaging)? = nil,
         showMainWindow: @escaping () -> Void,
         openPreferences: @escaping () -> Void,
         openAPIKeys: @escaping () -> Void,
+        createApp: @escaping () -> Void,
+        addVersion: @escaping () -> Void,
         exportAllData: @escaping () -> Void,
         exportCommandLogs: @escaping () -> Void,
         showAcknowledgements: @escaping () -> Void = {},
@@ -45,11 +50,13 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
         selectSection: @escaping (AppSection) -> Void,
         currentSection: @escaping () -> AppSection? = { nil }
     ) {
-        self.settings = settings
-        self.updateManager = updateManager
+        self.settings = settings ?? .shared
+        self.updateManager = updateManager ?? AppUpdateManager.shared
         self.showMainWindow = showMainWindow
         self.openPreferences = openPreferences
         self.openAPIKeys = openAPIKeys
+        self.createApp = createApp
+        self.addVersion = addVersion
         self.exportAllData = exportAllData
         self.exportCommandLogs = exportCommandLogs
         self.showAcknowledgements = showAcknowledgements
@@ -147,6 +154,17 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
         let item = NSMenuItem(title: L10n.Menu.file, action: nil, keyEquivalent: "")
         let menu = NSMenu(title: L10n.Menu.file)
 
+        let createAppItem = NSMenuItem(title: L10n.Menu.createApp, action: #selector(createAppAction), keyEquivalent: "n")
+        createAppItem.target = self
+        menu.addItem(createAppItem)
+
+        let addVersionItem = NSMenuItem(title: L10n.Menu.addVersion, action: #selector(addVersionAction), keyEquivalent: "N")
+        addVersionItem.keyEquivalentModifierMask = [.command, .shift]
+        addVersionItem.target = self
+        menu.addItem(addVersionItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         let apiKeysItem = NSMenuItem(title: L10n.Menu.manageAPIKeys, action: #selector(openAPIKeysSheet), keyEquivalent: "k")
         apiKeysItem.keyEquivalentModifierMask = [.command, .shift]
         apiKeysItem.target = self
@@ -209,6 +227,7 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
         menu.addItem(sectionMenuItem(for: .review, tag: .review))
         menu.addItem(sectionMenuItem(for: .testFlight, tag: .testFlight))
         menu.addItem(sectionMenuItem(for: .iap, tag: .iap))
+        menu.addItem(sectionMenuItem(for: .signing, tag: .signing))
         menu.addItem(sectionMenuItem(for: .logs, tag: .logs))
 
         menu.addItem(NSMenuItem.separator())
@@ -293,6 +312,8 @@ final class MainMenuController: NSObject, NSMenuItemValidation {
 
     @objc private func openPreferencesWindow() { openPreferences() }
     @objc private func openAPIKeysSheet() { openAPIKeys() }
+    @objc private func createAppAction() { createApp() }
+    @objc private func addVersionAction() { addVersion() }
     @objc private func exportAllDataAction() { exportAllData() }
     @objc private func exportCommandLogsAction() { exportCommandLogs() }
     @objc private func showMainWindowAction() { showMainWindow() }

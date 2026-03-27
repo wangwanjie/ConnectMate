@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-enum BuildProcessingState: Equatable, Sendable {
+nonisolated enum BuildProcessingState: Equatable, Sendable {
     case processing
     case valid
     case invalid
@@ -28,6 +28,7 @@ enum BuildProcessingState: Equatable, Sendable {
         }
     }
 
+    @MainActor
     var title: String {
         switch self {
         case .processing:

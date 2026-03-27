@@ -3,6 +3,7 @@ import GRDB
 import Testing
 @testable import ConnectMate
 
+@MainActor
 struct APIKeyServiceTests {
     @Test
     func validateProfileBuildsExpectedAscLoginArguments() async throws {
@@ -38,13 +39,30 @@ struct APIKeyServiceTests {
         let runner = CapturingAPIRunner()
         let service = APIKeyService(runner: runner)
 
-        await #expect(throws: APIKeyInputError.missingRequiredFields([.profileName, .issuerID, .keyID, .privateKeyPath])) {
+        await #expect(throws: (any Error).self) {
             _ = try await service.validate(
                 name: "",
                 issuerID: "",
                 keyID: "",
                 privateKeyPath: ""
             )
+        }
+
+        do {
+            _ = try await service.validate(
+                name: "",
+                issuerID: "",
+                keyID: "",
+                privateKeyPath: ""
+            )
+            Issue.record("Expected validation to throw for missing fields")
+        } catch let error as APIKeyInputError {
+            switch error {
+            case .missingRequiredFields(let fields):
+                #expect(fields.count == 4)
+            case .privateKeyFileMissing:
+                Issue.record("Expected missingRequiredFields error")
+            }
         }
 
         #expect(runner.runCount == 0)

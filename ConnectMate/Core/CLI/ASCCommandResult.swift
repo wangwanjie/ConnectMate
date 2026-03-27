@@ -1,6 +1,6 @@
 import Foundation
 
-struct ASCCommandResult: Sendable, Equatable {
+nonisolated struct ASCCommandResult: Sendable, Equatable {
     let executablePath: String
     let arguments: [String]
     let standardOutput: String

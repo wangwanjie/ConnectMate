@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let bootstrap = AppBootstrap()
 

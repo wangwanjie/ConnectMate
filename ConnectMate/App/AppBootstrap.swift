@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 final class AppBootstrap: NSObject {
     private let router = AppRouter()
     private let settings = AppSettings.shared
@@ -54,6 +55,14 @@ final class AppBootstrap: NSObject {
             },
             openAPIKeys: { [weak self] in
                 self?.openAPIKeys()
+            },
+            createApp: { [weak self] in
+                self?.showMainWindow()
+                self?.mainWindowController?.presentCreateAppSheet()
+            },
+            addVersion: { [weak self] in
+                self?.showMainWindow()
+                self?.mainWindowController?.presentCreateVersionSheet()
             },
             exportAllData: { [weak self] in
                 self?.exportAllData()

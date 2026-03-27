@@ -3,6 +3,7 @@ import GRDB
 import Testing
 @testable import ConnectMate
 
+@MainActor
 struct ASCCommandRunnerTests {
     @Test
     func runnerCanExecuteInstalledASCCLI() async throws {
@@ -71,10 +72,10 @@ struct ASCCommandRunnerTests {
 
     @Test
     func runnerSurfacesTimeoutAsStructuredError() async throws {
-        let runner = ASCCommandRunner(configuration: .init(cliPath: "/bin/sleep", timeout: 0.1, retryCount: 1))
+        let runner = ASCCommandRunner(configuration: .init(cliPath: "/bin/sh", timeout: 0.1, retryCount: 1))
 
         await #expect(throws: ASCError.timeout) {
-            _ = try await runner.run(arguments: ["2"])
+            _ = try await runner.run(arguments: ["-c", "while true; do sleep 1; done"])
         }
     }
 

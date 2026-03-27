@@ -1,6 +1,6 @@
 import Foundation
 
-struct AppSummary: Equatable, Identifiable, Sendable {
+nonisolated struct AppSummary: Equatable, Identifiable, Sendable {
     let id: String
     let name: String
     let bundleID: String

@@ -2,6 +2,7 @@ import Foundation
 
 enum SettingKey: String {
     case appearanceMode
+    case preferredLanguage
     case startAtLogin
     case autoRefreshOnLaunch
     case defaultLaunchSection

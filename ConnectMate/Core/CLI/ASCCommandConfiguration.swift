@@ -30,6 +30,7 @@ struct ASCCommandConfiguration: Sendable, Equatable {
         self.environment = environment
     }
 
+    @MainActor
     init(settings: AppSettings, apiKey: APIKeyRecord? = nil, workingDirectory: URL? = nil, environment: [String: String] = [:]) {
         self.init(
             cliPath: settings.cliPath,

@@ -11,7 +11,7 @@ protocol ASCCommandRunning {
 
 extension ASCCommandRunner: ASCCommandRunning {}
 
-enum APIKeyInputField: Equatable {
+enum APIKeyInputField {
     case profileName
     case issuerID
     case keyID
@@ -31,7 +31,7 @@ enum APIKeyInputField: Equatable {
     }
 }
 
-enum APIKeyInputError: LocalizedError, Equatable {
+enum APIKeyInputError: LocalizedError {
     case missingRequiredFields([APIKeyInputField])
     case privateKeyFileMissing(String)
 
@@ -46,6 +46,7 @@ enum APIKeyInputError: LocalizedError, Equatable {
     }
 }
 
+@MainActor
 final class APIKeyService {
     private let runner: any ASCCommandRunning
     private let dbWriter: any DatabaseWriter
@@ -53,11 +54,11 @@ final class APIKeyService {
 
     init(
         runner: any ASCCommandRunning,
-        dbWriter: any DatabaseWriter = DatabaseManager.shared.dbQueue,
+        dbWriter: (any DatabaseWriter)? = nil,
         fileManager: FileManager = .default
     ) {
         self.runner = runner
-        self.dbWriter = dbWriter
+        self.dbWriter = dbWriter ?? DatabaseManager.shared.dbQueue
         self.fileManager = fileManager
     }
 

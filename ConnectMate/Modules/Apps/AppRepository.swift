@@ -4,8 +4,12 @@ import GRDB
 struct AppRepository {
     private let dbWriter: any DatabaseWriter
 
-    init(dbWriter: any DatabaseWriter = DatabaseManager.shared.dbQueue) {
-        self.dbWriter = dbWriter
+    init(dbWriter: (any DatabaseWriter)? = nil) {
+        if let dbWriter {
+            self.dbWriter = dbWriter
+        } else {
+            self.dbWriter = DatabaseManager.shared.dbQueue
+        }
     }
 
     func replaceCache(with payloads: [ASCAppPayload], accountKeyID: Int64?) throws {

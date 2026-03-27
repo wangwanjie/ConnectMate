@@ -6,6 +6,8 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
     var onSelectApp: ((AppSummary?) -> Void)?
 
     private let service: AppService
+    private let settings: AppSettings
+    private let createButton = NSButton(title: L10n.Apps.createApp, target: nil, action: nil)
     private let searchField = NSSearchField()
     private let loadingView = LoadingView(title: L10n.Apps.loading)
     private lazy var errorStateView = ErrorStateView(
@@ -28,9 +30,18 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
     private var selectedAppID: String?
     private var hasLoadedInitialData = false
 
-    init(service: AppService = .makeDefault()) {
-        self.service = service
+    init(service: AppService? = nil, settings: AppSettings? = nil) {
+        let resolvedService = service ?? .makeDefault()
+        let resolvedSettings = settings ?? .shared
+        self.service = resolvedService
+        self.settings = resolvedSettings
         super.init(nibName: nil, bundle: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChange(_:)),
+            name: AppSettings.didChangeNotification,
+            object: resolvedSettings
+        )
     }
 
     @available(*, unavailable)
@@ -89,9 +100,22 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
         refreshApps()
     }
 
+    func presentCreateAppSheet(from window: NSWindow?) {
+        CreateAppSheetController.presentAsSheet(from: window, service: service) { [weak self] request in
+            guard let self else { return }
+            ToastManager.show(message: String(format: L10n.Apps.createSucceeded, request.name), in: self.view)
+            self.refreshApps()
+        }
+    }
+
     @objc
     private func handleAppSelection(_ sender: NSButton) {
         selectApp(at: sender.tag)
+    }
+
+    @objc
+    private func handleCreateApp() {
+        presentCreateAppSheet(from: view.window)
     }
 
     private func buildLayout() {
@@ -101,10 +125,13 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
         searchField.placeholderString = L10n.Apps.searchPlaceholder
         searchField.delegate = self
 
+        createButton.target = self
+        createButton.action = #selector(handleCreateApp)
+
         let refreshButton = NSButton(title: L10n.Apps.refresh, target: self, action: #selector(refreshApps))
 
         rowStack.orientation = .vertical
-        rowStack.spacing = 8
+        rowStack.spacing = settings.listRowDensity.appRowSpacing
         rowStack.alignment = .leading
 
         listContainer.addSubview(rowStack)
@@ -114,6 +141,7 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
 
         view.addSubview(titleLabel)
         view.addSubview(searchField)
+        view.addSubview(createButton)
         view.addSubview(refreshButton)
         view.addSubview(listContainer)
         view.addSubview(emptyStateView)
@@ -129,10 +157,15 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
             make.centerY.equalTo(titleLabel)
         }
 
+        createButton.snp.makeConstraints { make in
+            make.trailing.equalTo(refreshButton.snp.leading).offset(-12)
+            make.centerY.equalTo(refreshButton)
+        }
+
         searchField.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(16)
             make.leading.equalTo(titleLabel)
-            make.trailing.equalTo(refreshButton.snp.leading).offset(-12)
+            make.trailing.equalTo(createButton.snp.leading).offset(-12)
         }
 
         listContainer.snp.makeConstraints { make in
@@ -207,12 +240,27 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
             button.target = self
             button.action = #selector(handleAppSelection(_:))
             button.configure(with: app)
+            button.applyDensity(settings.listRowDensity)
             rowStack.addArrangedSubview(button)
             button.snp.makeConstraints { make in
                 make.width.equalToSuperview()
             }
             rowButtons.append(button)
         }
+    }
+
+    @objc
+    private func handleSettingsChange(_ notification: Notification) {
+        guard
+            let key = notification.userInfo?[AppSettings.changedKeyUserInfoKey] as? String,
+            key == SettingKey.listRowDensity.rawValue
+        else {
+            return
+        }
+
+        rowStack.spacing = settings.listRowDensity.appRowSpacing
+        rowButtons.forEach { $0.applyDensity(settings.listRowDensity) }
+        view.needsLayout = true
     }
 
     private func selectApp(at index: Int) {
@@ -253,7 +301,13 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
 private final class AppRowButton: NSButton {
     private let nameLabel = NSTextField(labelWithString: "")
     private let bundleLabel = NSTextField(labelWithString: "")
+    private let stack = NSStackView()
     private var isSelectedState = false
+    private var topConstraint: Constraint?
+    private var leadingConstraint: Constraint?
+    private var bottomConstraint: Constraint?
+    private var trailingConstraint: Constraint?
+    private var minimumHeightConstraint: Constraint?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -268,14 +322,21 @@ private final class AppRowButton: NSButton {
         bundleLabel.font = .systemFont(ofSize: 12)
         bundleLabel.textColor = .secondaryLabelColor
 
-        let stack = NSStackView(views: [nameLabel, bundleLabel])
         stack.orientation = .vertical
         stack.spacing = 4
         stack.alignment = .leading
+        stack.addArrangedSubview(nameLabel)
+        stack.addArrangedSubview(bundleLabel)
 
         addSubview(stack)
         stack.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(NSEdgeInsets(top: 10, left: 14, bottom: 10, right: 14))
+            topConstraint = make.top.equalToSuperview().inset(10).constraint
+            leadingConstraint = make.leading.equalToSuperview().inset(14).constraint
+            bottomConstraint = make.bottom.equalToSuperview().inset(10).constraint
+            trailingConstraint = make.trailing.equalToSuperview().inset(14).constraint
+        }
+        snp.makeConstraints { make in
+            minimumHeightConstraint = make.height.greaterThanOrEqualTo(52).constraint
         }
     }
 
@@ -294,6 +355,15 @@ private final class AppRowButton: NSButton {
     func updateSelection(isSelected: Bool) {
         isSelectedState = isSelected
         applySelectionStyle()
+    }
+
+    func applyDensity(_ density: ListRowDensity) {
+        let insets = density.appRowInsets
+        topConstraint?.update(inset: insets.top)
+        leadingConstraint?.update(inset: insets.left)
+        bottomConstraint?.update(inset: insets.bottom)
+        trailingConstraint?.update(inset: insets.right)
+        minimumHeightConstraint?.update(offset: density.appRowMinimumHeight)
     }
 
     func refreshSelectionStyle() {

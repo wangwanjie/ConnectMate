@@ -2,6 +2,9 @@ import Foundation
 
 final class AppSettings {
     static let shared = AppSettings()
+    static let didChangeNotification = Notification.Name("ConnectMate.AppSettings.didChange")
+    static let changedKeyUserInfoKey = "key"
+    static let changedValueUserInfoKey = "value"
 
     let userDefaults: UserDefaults
 
@@ -14,14 +17,19 @@ final class AppSettings {
         set { set(newValue, for: .appearanceMode) }
     }
 
+    var preferredLanguage: AppLanguage {
+        get { enumValue(for: .preferredLanguage, default: .system) }
+        set { set(newValue, for: .preferredLanguage) }
+    }
+
     var startAtLogin: Bool {
         get { boolValue(for: .startAtLogin, default: false) }
-        set { userDefaults.set(newValue, forKey: SettingKey.startAtLogin.rawValue) }
+        set { set(newValue, for: .startAtLogin) }
     }
 
     var autoRefreshOnLaunch: Bool {
         get { boolValue(for: .autoRefreshOnLaunch, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.autoRefreshOnLaunch.rawValue) }
+        set { set(newValue, for: .autoRefreshOnLaunch) }
     }
 
     var defaultLaunchSection: DefaultLaunchSection {
@@ -31,7 +39,7 @@ final class AppSettings {
 
     var requiresActionConfirmation: Bool {
         get { boolValue(for: .requiresActionConfirmation, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.requiresActionConfirmation.rawValue) }
+        set { set(newValue, for: .requiresActionConfirmation) }
     }
 
     var sidebarItemStyle: SidebarItemStyle {
@@ -46,17 +54,17 @@ final class AppSettings {
 
     var reviewStatusNotifications: Bool {
         get { boolValue(for: .reviewStatusNotifications, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.reviewStatusNotifications.rawValue) }
+        set { set(newValue, for: .reviewStatusNotifications) }
     }
 
     var buildProcessingNotifications: Bool {
         get { boolValue(for: .buildProcessingNotifications, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.buildProcessingNotifications.rawValue) }
+        set { set(newValue, for: .buildProcessingNotifications) }
     }
 
     var testerAcceptanceNotifications: Bool {
         get { boolValue(for: .testerAcceptanceNotifications, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.testerAcceptanceNotifications.rawValue) }
+        set { set(newValue, for: .testerAcceptanceNotifications) }
     }
 
     var notificationDeliveryMode: NotificationDeliveryMode {
@@ -66,27 +74,27 @@ final class AppSettings {
 
     var cliPath: String {
         get { stringValue(for: .cliPath, default: "/usr/local/bin/asc") }
-        set { userDefaults.set(newValue, forKey: SettingKey.cliPath.rawValue) }
+        set { set(newValue, for: .cliPath) }
     }
 
     var commandTimeout: Int {
         get { intValue(for: .commandTimeout, default: 30) }
-        set { userDefaults.set(max(1, newValue), forKey: SettingKey.commandTimeout.rawValue) }
+        set { set(max(1, newValue), for: .commandTimeout) }
     }
 
     var apiRetryCount: Int {
         get { intValue(for: .apiRetryCount, default: 3) }
-        set { userDefaults.set(min(max(1, newValue), 5), forKey: SettingKey.apiRetryCount.rawValue) }
+        set { set(min(max(1, newValue), 5), for: .apiRetryCount) }
     }
 
     var proxyEnabled: Bool {
         get { boolValue(for: .proxyEnabled, default: false) }
-        set { userDefaults.set(newValue, forKey: SettingKey.proxyEnabled.rawValue) }
+        set { set(newValue, for: .proxyEnabled) }
     }
 
     var proxyURL: String {
         get { stringValue(for: .proxyURL, default: "") }
-        set { userDefaults.set(newValue, forKey: SettingKey.proxyURL.rawValue) }
+        set { set(newValue, for: .proxyURL) }
     }
 
     var cachePolicy: CachePolicy {
@@ -101,7 +109,7 @@ final class AppSettings {
 
     var autoCheckUpdates: Bool {
         get { boolValue(for: .autoCheckUpdates, default: true) }
-        set { userDefaults.set(newValue, forKey: SettingKey.autoCheckUpdates.rawValue) }
+        set { set(newValue, for: .autoCheckUpdates) }
     }
 
     var updateCheckFrequency: UpdateCheckFrequency {
@@ -116,22 +124,22 @@ final class AppSettings {
 
     var globalHotkey: String {
         get { stringValue(for: .globalHotkey, default: "") }
-        set { userDefaults.set(newValue, forKey: SettingKey.globalHotkey.rawValue) }
+        set { set(newValue, for: .globalHotkey) }
     }
 
     var refreshShortcut: String {
         get { stringValue(for: .refreshShortcut, default: "cmd+r") }
-        set { userDefaults.set(newValue, forKey: SettingKey.refreshShortcut.rawValue) }
+        set { set(newValue, for: .refreshShortcut) }
     }
 
     var newTaskShortcut: String {
         get { stringValue(for: .newTaskShortcut, default: "cmd+n") }
-        set { userDefaults.set(newValue, forKey: SettingKey.newTaskShortcut.rawValue) }
+        set { set(newValue, for: .newTaskShortcut) }
     }
 
     var toggleAppearanceShortcut: String {
         get { stringValue(for: .toggleAppearanceShortcut, default: "cmd+shift+l") }
-        set { userDefaults.set(newValue, forKey: SettingKey.toggleAppearanceShortcut.rawValue) }
+        set { set(newValue, for: .toggleAppearanceShortcut) }
     }
 
     private func boolValue(for key: SettingKey, default defaultValue: Bool) -> Bool {
@@ -165,5 +173,32 @@ final class AppSettings {
 
     private func set<Value: RawRepresentable>(_ value: Value, for key: SettingKey) where Value.RawValue == String {
         userDefaults.set(value.rawValue, forKey: key.rawValue)
+        postChange(for: key, value: value.rawValue)
+    }
+
+    private func set(_ value: Bool, for key: SettingKey) {
+        userDefaults.set(value, forKey: key.rawValue)
+        postChange(for: key, value: value)
+    }
+
+    private func set(_ value: Int, for key: SettingKey) {
+        userDefaults.set(value, forKey: key.rawValue)
+        postChange(for: key, value: value)
+    }
+
+    private func set(_ value: String, for key: SettingKey) {
+        userDefaults.set(value, forKey: key.rawValue)
+        postChange(for: key, value: value)
+    }
+
+    private func postChange(for key: SettingKey, value: Any) {
+        NotificationCenter.default.post(
+            name: Self.didChangeNotification,
+            object: self,
+            userInfo: [
+                Self.changedKeyUserInfoKey: key.rawValue,
+                Self.changedValueUserInfoKey: value
+            ]
+        )
     }
 }

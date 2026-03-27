@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 final class MainWindowController: NSWindowController {
     private let splitViewController: MainSplitViewController
 
@@ -33,6 +34,14 @@ final class MainWindowController: NSWindowController {
 
     func refreshCurrentPage() {
         splitViewController.refreshCurrentPage()
+    }
+
+    func presentCreateAppSheet() {
+        splitViewController.presentCreateAppSheet()
+    }
+
+    func presentCreateVersionSheet() {
+        splitViewController.presentCreateVersionSheet()
     }
 
     func toggleSidebar() {

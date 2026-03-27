@@ -8,8 +8,10 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
 
     private let service: BuildService
     private let appRepository: AppRepository
+    private let settings: AppSettings
     private let appFilterLabel = NSTextField(labelWithString: L10n.Builds.appFilter)
     private let appPopup = NSPopUpButton()
+    private let addVersionButton = NSButton(title: L10n.Builds.addVersion, target: nil, action: nil)
     private let refreshButton = NSButton(title: L10n.Builds.refresh, target: nil, action: nil)
     private let expireButton = NSButton(title: L10n.Builds.expireSelected, target: nil, action: nil)
     private let tableView = NSTableView()
@@ -25,10 +27,24 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
     private var selectedAppID: String?
     private var hasLoadedInitialData = false
 
-    init(service: BuildService = .makeDefault(), appRepository: AppRepository = AppRepository()) {
-        self.service = service
-        self.appRepository = appRepository
+    init(
+        service: BuildService? = nil,
+        appRepository: AppRepository? = nil,
+        settings: AppSettings? = nil
+    ) {
+        let resolvedService = service ?? .makeDefault()
+        let resolvedRepository = appRepository ?? AppRepository()
+        let resolvedSettings = settings ?? .shared
+        self.service = resolvedService
+        self.appRepository = resolvedRepository
+        self.settings = resolvedSettings
         super.init(nibName: nil, bundle: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChange(_:)),
+            name: AppSettings.didChangeNotification,
+            object: resolvedSettings
+        )
     }
 
     @available(*, unavailable)
@@ -97,6 +113,28 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         refreshBuilds()
     }
 
+    func presentCreateVersionSheet(from window: NSWindow?) {
+        reloadAppOptions()
+
+        guard !availableApps.isEmpty else {
+            ToastManager.show(message: L10n.Builds.noAppsForVersion, in: view)
+            return
+        }
+
+        CreateVersionSheetController.presentAsSheet(
+            from: window,
+            service: service,
+            apps: availableApps,
+            selectedAppID: selectedAppID
+        ) { [weak self] request in
+            guard let self else { return }
+            self.selectedAppID = request.appID
+            self.reloadAppOptions()
+            ToastManager.show(message: String(format: L10n.Builds.addVersionSucceeded, request.versionString), in: self.view)
+            self.refreshBuilds()
+        }
+    }
+
     @objc
     private func handleExpireSelected() {
         let buildIDs = selectedBuildIDs
@@ -116,6 +154,11 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         }
     }
 
+    @objc
+    private func handleAddVersion() {
+        presentCreateVersionSheet(from: view.window)
+    }
+
     private func buildLayout() {
         let titleLabel = NSTextField(labelWithString: L10n.Builds.title)
         titleLabel.font = .systemFont(ofSize: 28, weight: .semibold)
@@ -125,6 +168,9 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
 
         appPopup.target = self
         appPopup.action = #selector(handleAppFilterChange)
+
+        addVersionButton.target = self
+        addVersionButton.action = #selector(handleAddVersion)
 
         refreshButton.target = self
         refreshButton.action = #selector(handleRefresh)
@@ -141,7 +187,7 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         tableView.headerView = nil
         tableView.allowsMultipleSelection = true
         tableView.usesAlternatingRowBackgroundColors = true
-        tableView.rowHeight = 34
+        tableView.rowHeight = settings.listRowDensity.tableRowHeight
         tableView.delegate = self
         tableView.dataSource = self
 
@@ -160,6 +206,7 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         view.addSubview(titleLabel)
         view.addSubview(appFilterLabel)
         view.addSubview(appPopup)
+        view.addSubview(addVersionButton)
         view.addSubview(refreshButton)
         view.addSubview(expireButton)
         view.addSubview(scrollView)
@@ -175,8 +222,13 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
             make.centerY.equalTo(titleLabel)
         }
 
-        expireButton.snp.makeConstraints { make in
+        addVersionButton.snp.makeConstraints { make in
             make.trailing.equalTo(refreshButton.snp.leading).offset(-12)
+            make.centerY.equalTo(refreshButton)
+        }
+
+        expireButton.snp.makeConstraints { make in
+            make.trailing.equalTo(addVersionButton.snp.leading).offset(-12)
             make.centerY.equalTo(refreshButton)
         }
 
@@ -206,6 +258,19 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         loadingView.snp.makeConstraints { make in
             make.center.equalTo(scrollView)
         }
+    }
+
+    @objc
+    private func handleSettingsChange(_ notification: Notification) {
+        guard
+            let key = notification.userInfo?[AppSettings.changedKeyUserInfoKey] as? String,
+            key == SettingKey.listRowDensity.rawValue
+        else {
+            return
+        }
+
+        tableView.rowHeight = settings.listRowDensity.tableRowHeight
+        tableView.noteHeightOfRows(withIndexesChanged: IndexSet(integersIn: 0..<max(builds.count, 1)))
     }
 
     private var selectedBuildIDs: [String] {
@@ -268,6 +333,7 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
         }
 
         refreshButton.isEnabled = selectedAppID != nil
+        addVersionButton.isEnabled = !availableApps.isEmpty
     }
 
     private func loadCachedBuilds() {

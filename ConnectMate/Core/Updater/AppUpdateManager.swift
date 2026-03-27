@@ -31,12 +31,12 @@ final class AppUpdateManager: NSObject, AppUpdateManaging {
     #endif
 
     init(
-        settings: AppSettings = .shared,
-        metadata: AppMetadata = AppMetadata(),
+        settings: AppSettings? = nil,
+        metadata: AppMetadata? = nil,
         session: URLSession = .shared
     ) {
-        self.settings = settings
-        self.metadata = metadata
+        self.settings = settings ?? .shared
+        self.metadata = metadata ?? AppMetadata()
         self.session = session
     }
 

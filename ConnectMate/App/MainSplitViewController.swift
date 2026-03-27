@@ -1,6 +1,7 @@
 import Cocoa
 import SnapKit
 
+@MainActor
 final class MainSplitViewController: NSSplitViewController {
     private let router: AppRouter
     private let settings: AppSettings
@@ -10,16 +11,48 @@ final class MainSplitViewController: NSSplitViewController {
     private lazy var appDetailController = AppDetailViewController()
     private lazy var buildDetailController = BuildDetailViewController()
     private lazy var appListController: AppListViewController = {
-        let controller = AppListViewController()
+        let controller = AppListViewController(settings: settings)
         controller.onSelectApp = { [weak self] app in
             self?.appDetailController.render(app: app)
         }
         return controller
     }()
     private lazy var buildListController: BuildListViewController = {
-        let controller = BuildListViewController()
+        let controller = BuildListViewController(settings: settings)
         controller.onSelectBuild = { [weak self] build in
             self?.buildDetailController.render(build: build)
+        }
+        return controller
+    }()
+    private lazy var signingDetailController: SigningDetailViewController = {
+        let controller = SigningDetailViewController()
+        controller.onRefreshRequested = { [weak self] _ in
+            self?.signingListController.refreshCurrentCategory()
+        }
+        controller.onPrimaryActionRequested = { [weak self] _ in
+            self?.signingListController.presentPrimaryActionSheet(from: self?.view.window)
+        }
+        controller.onCertificateActivationRequested = { [weak self] certificate, activated in
+            self?.signingListController.requestCertificateActivation(certificate, activated: activated)
+        }
+        controller.onCertificateRevokeRequested = { [weak self] certificate in
+            self?.signingListController.requestCertificateRevoke(certificate)
+        }
+        controller.onDeviceStatusRequested = { [weak self] device, enabled in
+            self?.signingListController.requestDeviceStatusChange(device, enabled: enabled)
+        }
+        controller.onProfileDownloadRequested = { [weak self] profile in
+            self?.signingListController.requestProfileDownload(profile)
+        }
+        controller.onProfileDeleteRequested = { [weak self] profile in
+            self?.signingListController.requestProfileDelete(profile)
+        }
+        return controller
+    }()
+    private lazy var signingListController: SigningListViewController = {
+        let controller = SigningListViewController(settings: settings)
+        controller.onSelectItem = { [weak self] category, item in
+            self?.signingDetailController.render(category: category, item: item)
         }
         return controller
     }()
@@ -29,7 +62,8 @@ final class MainSplitViewController: NSSplitViewController {
         self.router = router
         self.settings = settings
         self.sidebarController = SidebarViewController(
-            items: router.sections.map(SidebarItem.init(section:))
+            items: router.sections.map(SidebarItem.init(section:)),
+            settings: settings
         )
         super.init(nibName: nil, bundle: nil)
 
@@ -80,9 +114,21 @@ final class MainSplitViewController: NSSplitViewController {
             appListController.performRefreshFromMenu()
         case .builds:
             buildListController.performRefreshFromMenu()
+        case .signing:
+            signingListController.refreshCurrentCategory()
         default:
             break
         }
+    }
+
+    func presentCreateAppSheet() {
+        select(section: .apps)
+        appListController.presentCreateAppSheet(from: view.window)
+    }
+
+    func presentCreateVersionSheet() {
+        select(section: .builds)
+        buildListController.presentCreateVersionSheet(from: view.window)
     }
 
     func toggleSidebarVisibility() {
@@ -101,6 +147,9 @@ final class MainSplitViewController: NSSplitViewController {
         case .builds:
             listController.display(buildListController)
             detailController.display(buildDetailController)
+        case .signing:
+            listController.display(signingListController)
+            detailController.display(signingDetailController)
         default:
             let list = ModulePaneViewController(role: .list)
             list.render(
@@ -118,6 +167,7 @@ final class MainSplitViewController: NSSplitViewController {
     }
 }
 
+@MainActor
 private final class PaneHostViewController: NSViewController {
     private let role: ModulePaneRole
     private var currentChild: NSViewController?
@@ -159,6 +209,7 @@ private enum ModulePaneRole {
     case detail
 }
 
+@MainActor
 private final class ModulePaneViewController: NSViewController {
     private let role: ModulePaneRole
     private let titleLabel = NSTextField(labelWithString: "")

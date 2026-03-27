@@ -1,17 +1,28 @@
 import Cocoa
 
+@MainActor
 final class SettingsWindowController: NSWindowController {
     static let shared = SettingsWindowController()
     private let preferencesViewController: PreferencesViewController
 
-    private init() {
-        let contentViewController = PreferencesViewController(settings: .shared)
+    init(
+        settings: AppSettings? = nil,
+        updateManager: (any AppUpdateManaging)? = nil,
+        dataExportService: AppDataExportService? = nil
+    ) {
+        let resolvedSettings = settings ?? .shared
+        let contentViewController = PreferencesViewController(
+            settings: resolvedSettings,
+            updateManager: updateManager,
+            dataExportService: dataExportService
+        )
         self.preferencesViewController = contentViewController
         let window = NSWindow(contentViewController: contentViewController)
         window.title = L10n.Menu.preferences
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 980, height: 700))
-        window.minSize = NSSize(width: 900, height: 640)
+        window.toolbarStyle = .preference
+        window.setContentSize(NSSize(width: 720, height: 380))
+        window.minSize = NSSize(width: 680, height: 240)
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
         super.init(window: window)
@@ -26,6 +37,7 @@ final class SettingsWindowController: NSWindowController {
     func present() {
         showWindow(nil)
         window?.center()
+        preferencesViewController.prepareForPresentation()
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }

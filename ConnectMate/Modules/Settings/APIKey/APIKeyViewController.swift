@@ -1,6 +1,7 @@
 import Cocoa
 import SnapKit
 
+@MainActor
 final class APIKeyViewController: NSViewController, NSTableViewDataSource, NSTableViewDelegate {
     private let service: APIKeyService
     private let tableView = NSTableView()
@@ -12,16 +13,16 @@ final class APIKeyViewController: NSViewController, NSTableViewDataSource, NSTab
     private var profiles: [APIKeyRecord] = []
     private var selectedProfile: APIKeyRecord?
 
-    init(service: APIKeyService = APIKeyService(
-        runner: ASCCommandRunner(
-            configuration: ASCCommandConfiguration(
-                settings: .shared,
-                workingDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            ),
-            logRepository: DatabaseManager.shared.commandLogRepository
+    init(service: APIKeyService? = nil) {
+        self.service = service ?? APIKeyService(
+            runner: ASCCommandRunner(
+                configuration: ASCCommandConfiguration(
+                    settings: .shared,
+                    workingDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                ),
+                logRepository: DatabaseManager.shared.commandLogRepository
+            )
         )
-    )) {
-        self.service = service
         super.init(nibName: nil, bundle: nil)
     }
 

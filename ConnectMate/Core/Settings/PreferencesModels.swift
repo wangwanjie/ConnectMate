@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 enum AppearanceMode: String, CaseIterable {
     case system
@@ -13,6 +13,26 @@ enum AppearanceMode: String, CaseIterable {
             return L10n.Settings.AppearanceMode.light
         case .dark:
             return L10n.Settings.AppearanceMode.dark
+        }
+    }
+}
+
+enum AppLanguage: String, CaseIterable {
+    case system
+    case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
+    case english = "en"
+
+    var localizedTitle: String {
+        switch self {
+        case .system:
+            return L10n.Settings.Language.system
+        case .simplifiedChinese:
+            return L10n.Settings.Language.simplifiedChinese
+        case .traditionalChinese:
+            return L10n.Settings.Language.traditionalChinese
+        case .english:
+            return L10n.Settings.Language.english
         }
     }
 }
@@ -44,6 +64,50 @@ enum ListRowDensity: String, CaseIterable {
             return L10n.Settings.ListRowDensity.standard
         case .spacious:
             return L10n.Settings.ListRowDensity.spacious
+        }
+    }
+
+    var tableRowHeight: CGFloat {
+        switch self {
+        case .compact:
+            return 28
+        case .standard:
+            return 34
+        case .spacious:
+            return 44
+        }
+    }
+
+    var appRowInsets: NSEdgeInsets {
+        switch self {
+        case .compact:
+            return NSEdgeInsets(top: 6, left: 14, bottom: 6, right: 14)
+        case .standard:
+            return NSEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
+        case .spacious:
+            return NSEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+        }
+    }
+
+    var appRowMinimumHeight: CGFloat {
+        switch self {
+        case .compact:
+            return 40
+        case .standard:
+            return 52
+        case .spacious:
+            return 68
+        }
+    }
+
+    var appRowSpacing: CGFloat {
+        switch self {
+        case .compact:
+            return 6
+        case .standard:
+            return 8
+        case .spacious:
+            return 12
         }
     }
 }
@@ -125,6 +189,7 @@ enum DefaultLaunchSection: String, CaseIterable {
     case review
     case testFlight
     case iap
+    case signing
     case settings
     case logs
 
@@ -140,6 +205,8 @@ enum DefaultLaunchSection: String, CaseIterable {
             return L10n.Sidebar.testFlight
         case .iap:
             return L10n.Sidebar.iap
+        case .signing:
+            return L10n.Sidebar.signing
         case .settings:
             return L10n.Sidebar.settings
         case .logs:

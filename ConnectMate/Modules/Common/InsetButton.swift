@@ -11,6 +11,8 @@ final class InsetButton: NSButton {
         self.title = title
         self.target = target
         self.action = action
+        focusRingType = .none
+        (cell as? NSButtonCell)?.showsFirstResponder = false
     }
 
     @available(*, unavailable)

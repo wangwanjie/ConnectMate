@@ -7,7 +7,8 @@ final class AsyncImageView: NSImageView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        imageScaling = .scaleAxesIndependently
+        imageScaling = .scaleProportionallyUpOrDown
+        imageAlignment = .alignCenter
     }
 
     @available(*, unavailable)

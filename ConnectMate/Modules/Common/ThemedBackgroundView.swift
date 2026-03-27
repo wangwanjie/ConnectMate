@@ -40,9 +40,10 @@ final class ThemedBackgroundView: NSView {
 
 extension NSColor {
     func resolvedColor(with appearance: NSAppearance) -> NSColor {
-        let previousAppearance = NSAppearance.current
-        NSAppearance.current = appearance
-        defer { NSAppearance.current = previousAppearance }
-        return usingColorSpace(.deviceRGB) ?? self
+        var resolvedColor = self
+        appearance.performAsCurrentDrawingAppearance {
+            resolvedColor = usingColorSpace(.deviceRGB) ?? self
+        }
+        return resolvedColor
     }
 }

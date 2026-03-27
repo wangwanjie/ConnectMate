@@ -2,7 +2,7 @@ import Foundation
 
 enum L10n {
     static func tr(_ key: String) -> String {
-        NSLocalizedString(key, comment: "")
+        LocalizationManager.shared.localizedString(forKey: key)
     }
 
     enum App {
@@ -15,6 +15,8 @@ enum L10n {
         static var preferences: String { tr("menu.preferences") }
         static var quit: String { tr("menu.quit") }
         static var file: String { tr("menu.file") }
+        static var createApp: String { tr("menu.createApp") }
+        static var addVersion: String { tr("menu.addVersion") }
         static var edit: String { tr("menu.edit") }
         static var view: String { tr("menu.view") }
         static var window: String { tr("menu.window") }
@@ -57,6 +59,7 @@ enum L10n {
         static var review: String { tr("sidebar.review") }
         static var testFlight: String { tr("sidebar.testflight") }
         static var iap: String { tr("sidebar.iap") }
+        static var signing: String { tr("sidebar.signing") }
         static var settings: String { tr("sidebar.settings") }
         static var logs: String { tr("sidebar.logs") }
     }
@@ -77,6 +80,8 @@ enum L10n {
             static var startAtLogin: String { tr("settings.general.startAtLogin") }
             static var autoRefreshOnLaunch: String { tr("settings.general.autoRefreshOnLaunch") }
             static var defaultLaunchSection: String { tr("settings.general.defaultLaunchSection") }
+            static var appLanguage: String { tr("settings.general.appLanguage") }
+            static var languageChangeHint: String { tr("settings.general.languageChangeHint") }
             static var requiresConfirmation: String { tr("settings.general.requiresConfirmation") }
         }
 
@@ -106,8 +111,11 @@ enum L10n {
             static var cachePolicy: String { tr("settings.data.cachePolicy") }
             static var clearCache: String { tr("settings.data.clearCache") }
             static var cacheCleared: String { tr("settings.data.cacheCleared") }
+            static var clearCacheConfirmTitle: String { tr("settings.data.clearCacheConfirmTitle") }
+            static var clearCacheConfirmMessage: String { tr("settings.data.clearCacheConfirmMessage") }
             static var logRetention: String { tr("settings.data.logRetention") }
             static var exportData: String { tr("settings.data.exportData") }
+            static var exportDataDescription: String { tr("settings.data.exportDataDescription") }
         }
 
         enum Updates {
@@ -145,6 +153,13 @@ enum L10n {
             static var system: String { tr("settings.appearance.system") }
             static var light: String { tr("settings.appearance.light") }
             static var dark: String { tr("settings.appearance.dark") }
+        }
+
+        enum Language {
+            static var system: String { tr("settings.language.system") }
+            static var simplifiedChinese: String { tr("settings.language.simplifiedChinese") }
+            static var traditionalChinese: String { tr("settings.language.traditionalChinese") }
+            static var english: String { tr("settings.language.english") }
         }
 
         enum SidebarItemStyle {
@@ -198,6 +213,10 @@ enum L10n {
 
     enum Apps {
         static var title: String { tr("apps.title") }
+        static var createApp: String { tr("apps.createApp") }
+        static var createTitle: String { tr("apps.createTitle") }
+        static var createHint: String { tr("apps.createHint") }
+        static var name: String { tr("apps.name") }
         static var searchPlaceholder: String { tr("apps.searchPlaceholder") }
         static var refresh: String { tr("apps.refresh") }
         static var loading: String { tr("apps.loading") }
@@ -213,10 +232,18 @@ enum L10n {
         static var noSelectionDetail: String { tr("apps.noSelectionDetail") }
         static var unavailable: String { tr("apps.unavailable") }
         static var loadFailed: String { tr("apps.loadFailed") }
+        static var primaryLocale: String { tr("apps.primaryLocale") }
+        static var initialVersion: String { tr("apps.initialVersion") }
+        static var createSucceeded: String { tr("apps.createSucceeded") }
+        static var defaultPlatform: String { tr("apps.defaultPlatform") }
     }
 
     enum Builds {
         static var title: String { tr("builds.title") }
+        static var addVersion: String { tr("builds.addVersion") }
+        static var addVersionTitle: String { tr("builds.addVersionTitle") }
+        static var versionString: String { tr("builds.versionString") }
+        static var noAppsForVersion: String { tr("builds.noAppsForVersion") }
         static var appFilter: String { tr("builds.appFilter") }
         static var selectApp: String { tr("builds.selectApp") }
         static var refresh: String { tr("builds.refresh") }
@@ -243,6 +270,8 @@ enum L10n {
         static var expireTaskDetail: String { tr("builds.expireTaskDetail") }
         static var expireSucceeded: String { tr("builds.expireSucceeded") }
         static var expireFailed: String { tr("builds.expireFailed") }
+        static var addVersionSucceeded: String { tr("builds.addVersionSucceeded") }
+        static var defaultPlatform: String { tr("builds.defaultPlatform") }
 
         enum Status {
             static var processing: String { tr("builds.status.processing") }
@@ -258,9 +287,74 @@ enum L10n {
         static var activeTaskCount: String { tr("tasking.activeTaskCount") }
     }
 
+    enum Signing {
+        static var title: String { tr("signing.title") }
+        static var bundleIDs: String { tr("signing.bundleIDs") }
+        static var certificates: String { tr("signing.certificates") }
+        static var devices: String { tr("signing.devices") }
+        static var profiles: String { tr("signing.profiles") }
+        static var refresh: String { tr("signing.refresh") }
+        static var register: String { tr("signing.register") }
+        static var loading: String { tr("signing.loading") }
+        static var loadFailed: String { tr("signing.loadFailed") }
+        static var emptyBundleIDs: String { tr("signing.emptyBundleIDs") }
+        static var emptyCertificates: String { tr("signing.emptyCertificates") }
+        static var emptyDevices: String { tr("signing.emptyDevices") }
+        static var emptyProfiles: String { tr("signing.emptyProfiles") }
+        static var noSelectionTitle: String { tr("signing.noSelectionTitle") }
+        static var noSelectionDetail: String { tr("signing.noSelectionDetail") }
+        static var id: String { tr("signing.id") }
+        static var name: String { tr("signing.name") }
+        static var identifier: String { tr("signing.identifier") }
+        static var platform: String { tr("signing.platform") }
+        static var seedID: String { tr("signing.seedID") }
+        static var type: String { tr("signing.type") }
+        static var displayName: String { tr("signing.displayName") }
+        static var serialNumber: String { tr("signing.serialNumber") }
+        static var expirationDate: String { tr("signing.expirationDate") }
+        static var status: String { tr("signing.status") }
+        static var udid: String { tr("signing.udid") }
+        static var deviceClass: String { tr("signing.deviceClass") }
+        static var model: String { tr("signing.model") }
+        static var profileState: String { tr("signing.profileState") }
+        static var activate: String { tr("signing.activate") }
+        static var disable: String { tr("signing.disable") }
+        static var revoke: String { tr("signing.revoke") }
+        static var download: String { tr("signing.download") }
+        static var actionSucceeded: String { tr("signing.actionSucceeded") }
+        static var createSucceeded: String { tr("signing.createSucceeded") }
+        static var createBundleIDTitle: String { tr("signing.createBundleIDTitle") }
+        static var createCertificateTitle: String { tr("signing.createCertificateTitle") }
+        static var registerDeviceTitle: String { tr("signing.registerDeviceTitle") }
+        static var createProfileTitle: String { tr("signing.createProfileTitle") }
+        static var csrPath: String { tr("signing.csrPath") }
+        static var commonName: String { tr("signing.commonName") }
+        static var privateKeyOutputPath: String { tr("signing.privateKeyOutputPath") }
+        static var generatedCSRPath: String { tr("signing.generatedCSRPath") }
+        static var generateCSR: String { tr("signing.generateCSR") }
+        static var generateCSRMissingFields: String { tr("signing.generateCSRMissingFields") }
+        static var csrGenerated: String { tr("signing.csrGenerated") }
+        static var certificateHint: String { tr("signing.certificateHint") }
+        static var bundleID: String { tr("signing.bundleID") }
+        static var certificateIDs: String { tr("signing.certificateIDs") }
+        static var deviceIDs: String { tr("signing.deviceIDs") }
+        static var invertSelection: String { tr("signing.invertSelection") }
+        static var configureCapabilitiesTitle: String { tr("signing.configureCapabilitiesTitle") }
+        static var existingCapabilities: String { tr("signing.existingCapabilities") }
+        static var capability: String { tr("signing.capability") }
+        static var settingsJSON: String { tr("signing.settingsJSON") }
+        static var capabilityHint: String { tr("signing.capabilityHint") }
+        static var bundleIDResolveFailed: String { tr("signing.bundleIDResolveFailed") }
+        static var useCurrentMachineUDID: String { tr("signing.useCurrentMachineUDID") }
+        static var profileHint: String { tr("signing.profileHint") }
+    }
+
     enum Common {
         static var browse: String { tr("common.browse") }
         static var save: String { tr("common.save") }
+        static var create: String { tr("common.create") }
+        static var add: String { tr("common.add") }
+        static var cancel: String { tr("common.cancel") }
         static var delete: String { tr("common.delete") }
         static var validate: String { tr("common.validate") }
         static var activate: String { tr("common.activate") }

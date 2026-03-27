@@ -51,6 +51,10 @@ final class ErrorStateView: NSView {
         }
     }
 
+    func updateDetail(_ detail: String) {
+        detailLabel.stringValue = detail
+    }
+
     @objc
     private func handleAction() {
         actionHandler?()

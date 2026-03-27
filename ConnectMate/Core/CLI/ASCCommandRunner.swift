@@ -59,7 +59,7 @@ final class ASCCommandRunner {
         process.currentDirectoryURL = configuration.workingDirectory
 
         let inputPipe: Pipe?
-        if let standardInput {
+        if standardInput != nil {
             let pipe = Pipe()
             process.standardInput = pipe
             inputPipe = pipe
@@ -85,8 +85,8 @@ final class ASCCommandRunner {
         do {
             try process.run()
 
-            if let standardInput, let inputPipe {
-                inputPipe.fileHandleForWriting.write(standardInput)
+            if let inputPipe {
+                inputPipe.fileHandleForWriting.write(standardInput ?? Data())
                 try? inputPipe.fileHandleForWriting.close()
             }
 
@@ -296,17 +296,17 @@ final class ASCCommandRunner {
     }
 }
 
-private final class DataAccumulator {
-    private let lock = NSLock()
-    private var storage = Data()
+private final class DataAccumulator: @unchecked Sendable {
+    nonisolated(unsafe) private let lock = NSLock()
+    nonisolated(unsafe) private var storage = Data()
 
-    func append(_ data: Data) {
+    nonisolated func append(_ data: Data) {
         lock.lock()
+        defer { lock.unlock() }
         storage.append(data)
-        lock.unlock()
     }
 
-    func finalData(appending trailingData: Data) -> Data {
+    nonisolated func finalData(appending trailingData: Data) -> Data {
         lock.lock()
         defer { lock.unlock() }
         storage.append(trailingData)

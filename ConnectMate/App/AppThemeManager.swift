@@ -9,11 +9,14 @@ final class AppThemeManager {
 
     private init() {}
 
-    func applyStoredPreference(settings: AppSettings = .shared, application: NSApplication = .shared) {
+    func applyStoredPreference(settings: AppSettings? = nil, application: NSApplication? = nil) {
+        let settings = settings ?? .shared
+        let application = application ?? .shared
         apply(settings.appearanceMode, application: application)
     }
 
-    func apply(_ mode: AppearanceMode, application: NSApplication = .shared) {
+    func apply(_ mode: AppearanceMode, application: NSApplication? = nil) {
+        let application = application ?? .shared
         appliedMode = mode
 
         switch mode {

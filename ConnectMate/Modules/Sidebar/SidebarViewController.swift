@@ -1,11 +1,13 @@
 import Cocoa
 import SnapKit
 
+@MainActor
 final class SidebarViewController: NSViewController {
     var onSelectSection: ((AppSection) -> Void)?
     var onOpenPreferences: (() -> Void)?
 
     private let items: [SidebarItem]
+    private let settings: AppSettings
     private let settingsTitle: String
     private var buttons: [AppSection: NSButton] = [:]
     private let buttonStack = NSStackView()
@@ -13,10 +15,18 @@ final class SidebarViewController: NSViewController {
     private let settingsButton = NSButton(title: "", target: nil, action: nil)
     private var selectedSection: AppSection?
 
-    init(items: [SidebarItem], settingsTitle: String = L10n.Sidebar.settings) {
+    init(items: [SidebarItem], settings: AppSettings? = nil, settingsTitle: String? = nil) {
         self.items = items
-        self.settingsTitle = settingsTitle
+        let resolvedSettings = settings ?? .shared
+        self.settings = resolvedSettings
+        self.settingsTitle = settingsTitle ?? L10n.Sidebar.settings
         super.init(nibName: nil, bundle: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChange(_:)),
+            name: AppSettings.didChangeNotification,
+            object: resolvedSettings
+        )
     }
 
     @available(*, unavailable)
@@ -70,6 +80,8 @@ final class SidebarViewController: NSViewController {
         container.snp.makeConstraints { make in
             make.edges.equalToSuperview().inset(NSEdgeInsets(top: 20, left: 14, bottom: 14, right: 14))
         }
+
+        applySidebarStyle()
     }
 
     func select(section: AppSection) {
@@ -88,6 +100,18 @@ final class SidebarViewController: NSViewController {
     @objc
     private func handleOpenPreferences() {
         onOpenPreferences?()
+    }
+
+    @objc
+    private func handleSettingsChange(_ notification: Notification) {
+        guard
+            let key = notification.userInfo?[AppSettings.changedKeyUserInfoKey] as? String,
+            key == SettingKey.sidebarItemStyle.rawValue
+        else {
+            return
+        }
+
+        applySidebarStyle()
     }
 
     private func makeSidebarButton(title: String, symbolName: String, action: Selector) -> NSButton {
@@ -121,5 +145,20 @@ final class SidebarViewController: NSViewController {
                 button.layer?.backgroundColor = NSColor.clear.cgColor
             }
         }
+    }
+
+    private func applySidebarStyle() {
+        let iconOnly = settings.sidebarItemStyle == .iconOnly
+
+        for item in items {
+            guard let button = buttons[item.section] else { continue }
+            button.title = iconOnly ? "" : item.title
+            button.imagePosition = iconOnly ? .imageOnly : .imageLeading
+            button.toolTip = iconOnly ? item.title : nil
+        }
+
+        settingsButton.title = iconOnly ? "" : settingsTitle
+        settingsButton.imagePosition = iconOnly ? .imageOnly : .imageLeading
+        settingsButton.toolTip = iconOnly ? settingsTitle : nil
     }
 }

@@ -6,6 +6,7 @@ enum AppSection: String, CaseIterable {
     case review
     case testFlight
     case iap
+    case signing
     case settings
     case logs
 
@@ -21,6 +22,8 @@ enum AppSection: String, CaseIterable {
             return L10n.Sidebar.testFlight
         case .iap:
             return L10n.Sidebar.iap
+        case .signing:
+            return L10n.Sidebar.signing
         case .settings:
             return L10n.Sidebar.settings
         case .logs:
@@ -40,6 +43,8 @@ enum AppSection: String, CaseIterable {
             return "TestFlight"
         case .iap:
             return "In-App Purchases"
+        case .signing:
+            return "Signing Assets"
         case .settings:
             return "Settings"
         case .logs:
@@ -59,6 +64,8 @@ enum AppSection: String, CaseIterable {
             return "person.3"
         case .iap:
             return "dollarsign.circle"
+        case .signing:
+            return "checkmark.seal"
         case .settings:
             return "gearshape"
         case .logs:
@@ -68,7 +75,7 @@ enum AppSection: String, CaseIterable {
 }
 
 final class AppRouter {
-    let sections: [AppSection] = [.apps, .builds, .review, .testFlight, .iap, .logs]
+    let sections: [AppSection] = [.apps, .builds, .review, .testFlight, .iap, .signing, .logs]
 
     func initialSection(for settings: AppSettings) -> AppSection {
         switch settings.defaultLaunchSection {
@@ -82,6 +89,8 @@ final class AppRouter {
             return .testFlight
         case .iap:
             return .iap
+        case .signing:
+            return .signing
         case .settings:
             return .apps
         case .logs:

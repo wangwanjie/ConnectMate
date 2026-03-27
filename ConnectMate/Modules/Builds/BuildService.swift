@@ -1,25 +1,64 @@
 import Foundation
 import GRDB
 
+nonisolated enum VersionCreationInputField: Equatable {
+    case appID
+    case versionString
+
+    var title: String {
+        switch self {
+        case .appID:
+            return "App"
+        case .versionString:
+            return "Version"
+        }
+    }
+}
+
+nonisolated enum VersionCreationInputError: LocalizedError, Equatable {
+    case missingRequiredFields([VersionCreationInputField])
+
+    var errorDescription: String? {
+        switch self {
+        case .missingRequiredFields(let fields):
+            let joined = fields.map(\.title).joined(separator: " / ")
+            return "Missing required fields: \(joined)"
+        }
+    }
+}
+
+@MainActor
 final class BuildService {
+    nonisolated struct CreateVersionRequest: Equatable, Sendable {
+        let appID: String
+        let versionString: String
+        let platform: String?
+
+        init(appID: String, versionString: String, platform: String? = nil) {
+            self.appID = appID
+            self.versionString = versionString
+            self.platform = platform
+        }
+    }
+
     private let runner: any ASCCommandRunning
     let repository: BuildRepository
     private let parser: ASCOutputParser
-    private let activeProfileProvider: @Sendable () throws -> APIKeyRecord?
+    private let activeProfileProvider: @MainActor @Sendable () throws -> APIKeyRecord?
     private let taskReporter: any BuildTaskReporting
 
     init(
         runner: any ASCCommandRunning,
-        repository: BuildRepository = BuildRepository(),
+        repository: BuildRepository? = nil,
         parser: ASCOutputParser = ASCOutputParser(),
-        taskReporter: any BuildTaskReporting = TaskCenter.shared,
-        activeProfileProvider: @escaping @Sendable () throws -> APIKeyRecord? = BuildService.defaultActiveProfile
+        taskReporter: (any BuildTaskReporting)? = nil,
+        activeProfileProvider: (@MainActor @Sendable () throws -> APIKeyRecord?)? = nil
     ) {
         self.runner = runner
-        self.repository = repository
+        self.repository = repository ?? BuildRepository()
         self.parser = parser
-        self.taskReporter = taskReporter
-        self.activeProfileProvider = activeProfileProvider
+        self.taskReporter = taskReporter ?? TaskCenter.shared
+        self.activeProfileProvider = activeProfileProvider ?? BuildService.defaultActiveProfile
     }
 
     func loadCachedBuilds(appID: String, status: BuildProcessingState?) throws -> [BuildSummary] {
@@ -41,27 +80,49 @@ final class BuildService {
         return try loadCachedBuilds(appID: appID, status: status)
     }
 
+    func createVersion(_ request: CreateVersionRequest) async throws -> ASCCommandResult {
+        let normalized = try normalizeCreateRequest(request)
+
+        var arguments = [
+            "versions", "create",
+            "--app", normalized.appID,
+            "--version", normalized.versionString
+        ]
+
+        if let platform = normalized.platform {
+            arguments.append(contentsOf: ["--platform", platform])
+        }
+
+        arguments.append(contentsOf: ["--output", "json"])
+
+        return try await runner.run(
+            arguments: arguments,
+            standardInput: nil,
+            extraEnvironment: [:]
+        )
+    }
+
     func expireBuilds(_ buildIDs: [String]) async throws {
         let filteredBuildIDs = buildIDs.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         guard !filteredBuildIDs.isEmpty else {
             return
         }
 
-        let taskID = await taskReporter.startTask(
+        let taskID = taskReporter.startTask(
             title: L10n.Builds.expireTaskTitle,
             detail: L10n.Builds.expireTaskDetail
         )
 
         do {
             for (index, buildID) in filteredBuildIDs.enumerated() {
-                try await runner.run(
+                _ = try await runner.run(
                     arguments: ["builds", "expire", "--build", buildID, "--confirm"],
                     standardInput: nil,
                     extraEnvironment: [:]
                 )
 
                 let progress = Double(index + 1) / Double(filteredBuildIDs.count)
-                await taskReporter.updateTask(
+                taskReporter.updateTask(
                     id: taskID,
                     detail: buildID,
                     fractionCompleted: progress,
@@ -69,13 +130,13 @@ final class BuildService {
                 )
             }
 
-            await taskReporter.finishTask(
+            taskReporter.finishTask(
                 id: taskID,
                 state: .succeeded,
                 detail: L10n.Builds.expireSucceeded
             )
         } catch {
-            await taskReporter.finishTask(
+            taskReporter.finishTask(
                 id: taskID,
                 state: .failed,
                 detail: error.localizedDescription
@@ -94,7 +155,7 @@ final class BuildService {
 
     static func makeDefault() -> BuildService {
         let databaseManager = DatabaseManager.shared
-        let activeProfileProvider: @Sendable () throws -> APIKeyRecord? = {
+        let activeProfileProvider: @MainActor @Sendable () throws -> APIKeyRecord? = {
             try databaseManager.dbQueue.read { db in
                 try APIKeyRecord
                     .filter(Column("is_active") == true)
@@ -130,6 +191,30 @@ final class BuildService {
             activeProfileProvider: activeProfileProvider
         )
     }
+
+    private func normalizeCreateRequest(_ request: CreateVersionRequest) throws -> CreateVersionRequest {
+        let appID = request.appID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let versionString = request.versionString.trimmingCharacters(in: .whitespacesAndNewlines)
+        let platform = request.platform?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+
+        var missingFields: [VersionCreationInputField] = []
+        if appID.isEmpty {
+            missingFields.append(.appID)
+        }
+        if versionString.isEmpty {
+            missingFields.append(.versionString)
+        }
+
+        if !missingFields.isEmpty {
+            throw VersionCreationInputError.missingRequiredFields(missingFields)
+        }
+
+        return CreateVersionRequest(
+            appID: appID,
+            versionString: versionString,
+            platform: platform
+        )
+    }
 }
 
 private struct FixtureBuildsRunner: ASCCommandRunning {
@@ -146,5 +231,11 @@ private struct FixtureBuildsRunner: ASCCommandRunning {
             duration: 0.01,
             attemptCount: 1
         )
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }
