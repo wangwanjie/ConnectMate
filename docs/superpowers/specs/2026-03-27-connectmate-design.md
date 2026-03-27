@@ -113,6 +113,59 @@
 
 模块只依赖 `Core Services` 暴露的接口，不直接操作 `Process`。
 
+### Apps / Builds 新建动作边界
+
+`我的 App` 与 `构建版本` 需要补齐“写操作”入口，但仍沿用当前三栏架构：
+
+- Apps 列表页右上角增加“创建 App”
+- Builds 列表页右上角增加“添加版本”
+- 菜单栏同步提供同名命令，调用同一套页面动作
+- 表单通过 sheet 展示，不引入单独窗口
+
+命令边界：
+
+- `创建 App` 使用 `asc apps create`
+- `添加版本` 使用 `asc versions create`
+- CLI 参数拼装必须集中在服务层，请求模型由服务层定义，控制器只提交表单值并处理成功/失败回调
+
+鉴于 `asc apps create` 的真实行为依赖 Apple web-session，而不是 API Key，创建 App 的表单需要明确提示这一前提，失败时直接展示 CLI 返回信息，不做误导性的“API Key 配置失败”二次包装。
+
+成功路径：
+
+- 创建 App 成功后立即触发 Apps 列表刷新
+- 添加版本成功后立即触发当前 App 的 Builds 列表刷新
+- 两个动作都要复用现有 Toast / Alert 和命令日志链路
+
+### 签名资产模块边界
+
+新增单独的“签名资产”模块，而不是把证书、设备、描述文件直接塞进创建 App 表单。
+
+模块拆分：
+
+- 标识符：`asc bundle-ids`
+- 证书：`asc certificates`
+- 设备：`asc devices`
+- 描述文件：`asc profiles`
+
+交互结构：
+
+- 左侧 Sidebar 增加“签名资产”
+- 中间列表页顶部使用 segmented control 在四类资产之间切换
+- 右侧详情页根据当前资产类型展示字段与操作按钮
+
+创建 App 表单同步改造：
+
+- `Primary Locale` 改为下拉选择，不再手输
+- `Bundle ID` 改为可搜索选择
+- 表单内提供“新建标识符”入口，新建成功后回填到创建 App 表单
+
+实现边界：
+
+- 语言列表使用应用内置 catalogue，不依赖 CLI 动态接口
+- Bundle ID / 证书 / 设备 / 描述文件列表走真实 CLI JSON 输出
+- 标识符、证书、设备、描述文件的写操作分别映射到各自 CLI create / update / delete / revoke / download 命令
+- 新模块先走实时读取，不强制写入本地缓存数据库，避免为签名资产引入额外 schema 返工
+
 ### 5. Release Tooling
 
 负责：

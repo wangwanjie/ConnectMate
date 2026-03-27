@@ -60,6 +60,7 @@
 - Create: `ConnectMate/Modules/Settings/*`
 - Create: `ConnectMate/Modules/Apps/*`
 - Create: `ConnectMate/Modules/Builds/*`
+- Create: `ConnectMate/Modules/Signing/*`
 - Create: `ConnectMate/Modules/Review/*`
 - Create: `ConnectMate/Modules/TestFlight/*`
 - Create: `ConnectMate/Modules/InAppPurchase/*`
@@ -92,6 +93,9 @@
 - Create: `ConnectMateTests/Review/ReviewServiceTests.swift`
 - Create: `ConnectMateTests/TestFlight/TestFlightServiceTests.swift`
 - Create: `ConnectMateTests/InAppPurchase/IAPServiceTests.swift`
+- Create: `ConnectMateTests/Apps/AppCreationFlowTests.swift`
+- Create: `ConnectMateTests/Builds/VersionCreationFlowTests.swift`
+- Create: `ConnectMateTests/Signing/SigningAssetsServiceTests.swift`
 - Modify: `ConnectMateTests/ConnectMateTests.swift`
 - Modify: `ConnectMateUITests/ConnectMateUITests.swift`
 - Modify: `ConnectMateUITests/ConnectMateUITestsLaunchTests.swift`
@@ -258,6 +262,287 @@ xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination '
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
+
+## Task 3: Add App Creation And Version Creation Flows
+
+**Files:**
+- Modify: `ConnectMate/App/MainWindowController.swift`
+- Modify: `ConnectMate/App/MainSplitViewController.swift`
+- Modify: `ConnectMate/App/MainMenuController.swift`
+- Modify: `ConnectMate/Modules/Settings/Localization.swift`
+- Modify: `ConnectMate/Modules/Apps/AppService.swift`
+- Modify: `ConnectMate/Modules/Apps/AppListViewController.swift`
+- Create: `ConnectMate/Modules/Apps/CreateAppSheetController.swift`
+- Modify: `ConnectMate/Modules/Builds/BuildService.swift`
+- Modify: `ConnectMate/Modules/Builds/BuildListViewController.swift`
+- Create: `ConnectMate/Modules/Builds/CreateVersionSheetController.swift`
+- Modify: `ConnectMate/en.lproj/Localizable.strings`
+- Modify: `ConnectMate/zh-Hans.lproj/Localizable.strings`
+- Modify: `ConnectMate/zh-Hant.lproj/Localizable.strings`
+- Test: `ConnectMateTests/Apps/AppServiceTests.swift`
+- Test: `ConnectMateTests/Builds/BuildServiceTests.swift`
+- Test: `ConnectMateTests/App/MainMenuControllerTests.swift`
+
+- [ ] **Step 1: Write the failing command-assembly tests for app creation**
+
+```swift
+@Test
+func createAppBuildsExpectedArguments() async throws {
+    let runner = CapturingAppRunner()
+    let service = AppService(runner: runner, repository: AppRepository(dbWriter: dbQueue), activeProfileProvider: { nil })
+
+    _ = try await service.createApp(
+        .init(name: "ConnectMate", bundleID: "com.example.connectmate", sku: "CONNECTMATE_MAC", primaryLocale: "zh-Hans")
+    )
+
+    #expect(runner.capturedArguments.last == [
+        "apps", "create",
+        "--name", "ConnectMate",
+        "--bundle-id", "com.example.connectmate",
+        "--sku", "CONNECTMATE_MAC",
+        "--primary-locale", "zh-Hans",
+        "--output", "json"
+    ])
+}
+```
+
+- [ ] **Step 2: Run the app-service test to verify it fails**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests test
+```
+
+Expected: FAIL because the create request model and service method do not exist.
+
+- [ ] **Step 3: Write the failing command-assembly tests for version creation**
+
+```swift
+@Test
+func createVersionBuildsExpectedArguments() async throws {
+    let runner = CapturingBuildRunner()
+    let service = BuildService(runner: runner, repository: BuildRepository(dbWriter: dbQueue), activeProfileProvider: { nil })
+
+    _ = try await service.createVersion(
+        .init(appID: "123456789", versionString: "2.0.0", platform: "MAC_OS")
+    )
+
+    #expect(runner.capturedArguments.last == [
+        "versions", "create",
+        "--app", "123456789",
+        "--version", "2.0.0",
+        "--platform", "MAC_OS",
+        "--output", "json"
+    ])
+}
+```
+
+- [ ] **Step 4: Run the build-service test to verify it fails**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/BuildServiceTests test
+```
+
+Expected: FAIL because the version creation request model and service method do not exist.
+
+- [ ] **Step 5: Implement the minimal service-layer creation APIs**
+
+Implement:
+
+- `AppService.CreateAppRequest` input normalization and CLI argument assembly
+- `BuildService.CreateVersionRequest` input normalization and CLI argument assembly
+- direct `runner.run(...)` execution with `--output json`
+- lightweight success handling that reuses existing refresh methods instead of duplicating parsing logic
+
+- [ ] **Step 6: Re-run the targeted service tests**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests -only-testing:ConnectMateTests/BuildServiceTests test
+```
+
+Expected: PASS.
+
+- [ ] **Step 7: Write the failing menu and controller entry-point tests**
+
+Add tests proving:
+
+- `MainMenuController` includes `Create App…` and `Add Version…`
+- selecting the Apps command triggers the injected app-creation action
+- selecting the Builds command triggers the injected version-creation action
+
+- [ ] **Step 8: Run the menu tests to verify they fail**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/MainMenuControllerTests test
+```
+
+Expected: FAIL because the menu items and actions do not exist.
+
+- [ ] **Step 9: Implement shared sheet controllers and wire all entry points**
+
+Implement:
+
+- `CreateAppSheetController` with fields for name, bundle ID, SKU, primary locale, optional platform, and a web-session requirement hint
+- `CreateVersionSheetController` with app selector, version string, optional platform
+- page-level buttons in `AppListViewController` and `BuildListViewController`
+- menu commands in `MainMenuController`
+- shell forwarding in `MainSplitViewController` / `MainWindowController`
+- success callbacks that refresh the affected list and show existing toast messaging
+
+- [ ] **Step 10: Re-run the targeted tests**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests -only-testing:ConnectMateTests/BuildServiceTests -only-testing:ConnectMateTests/MainMenuControllerTests test
+```
+
+Expected: PASS.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add ConnectMate/App/MainWindowController.swift ConnectMate/App/MainSplitViewController.swift ConnectMate/App/MainMenuController.swift ConnectMate/Modules/Settings/Localization.swift ConnectMate/Modules/Apps/AppService.swift ConnectMate/Modules/Apps/AppListViewController.swift ConnectMate/Modules/Apps/CreateAppSheetController.swift ConnectMate/Modules/Builds/BuildService.swift ConnectMate/Modules/Builds/BuildListViewController.swift ConnectMate/Modules/Builds/CreateVersionSheetController.swift ConnectMate/en.lproj/Localizable.strings ConnectMate/zh-Hans.lproj/Localizable.strings ConnectMate/zh-Hant.lproj/Localizable.strings ConnectMateTests/Apps/AppServiceTests.swift ConnectMateTests/Builds/BuildServiceTests.swift ConnectMateTests/App/MainMenuControllerTests.swift
+git commit -m "feat: 增加创建 App 与添加版本流程"
+```
+
+## Task 4: Add Signing Assets Module And Bundle ID Driven App Creation
+
+**Files:**
+- Modify: `ConnectMate/App/AppRouter.swift`
+- Modify: `ConnectMate/App/MainSplitViewController.swift`
+- Modify: `ConnectMate/App/MainMenuController.swift`
+- Modify: `ConnectMate/Core/Settings/PreferencesModels.swift`
+- Modify: `ConnectMate/Modules/Settings/Localization.swift`
+- Modify: `ConnectMate/Modules/Apps/AppService.swift`
+- Modify: `ConnectMate/Modules/Apps/CreateAppSheetController.swift`
+- Create: `ConnectMate/Modules/Apps/AppStoreLocaleCatalog.swift`
+- Create: `ConnectMate/Modules/Signing/SigningAssetsService.swift`
+- Create: `ConnectMate/Modules/Signing/SigningAssetModels.swift`
+- Create: `ConnectMate/Modules/Signing/SigningListViewController.swift`
+- Create: `ConnectMate/Modules/Signing/SigningDetailViewController.swift`
+- Create: `ConnectMate/Modules/Signing/CreateBundleIDSheetController.swift`
+- Create: `ConnectMate/Modules/Signing/CreateCertificateSheetController.swift`
+- Create: `ConnectMate/Modules/Signing/RegisterDeviceSheetController.swift`
+- Create: `ConnectMate/Modules/Signing/CreateProfileSheetController.swift`
+- Modify: `ConnectMate/en.lproj/Localizable.strings`
+- Modify: `ConnectMate/zh-Hans.lproj/Localizable.strings`
+- Modify: `ConnectMate/zh-Hant.lproj/Localizable.strings`
+- Test: `ConnectMateTests/Apps/AppServiceTests.swift`
+- Test: `ConnectMateTests/App/MainMenuControllerTests.swift`
+- Test: `ConnectMateTests/Signing/SigningAssetsServiceTests.swift`
+
+- [ ] **Step 1: Write the failing signing-service parsing and argument tests**
+
+Cover:
+
+- bundle-id list parsing
+- bundle-id create argument assembly
+- certificate create / update / revoke argument assembly
+- device register / update argument assembly
+- profile create / download / delete argument assembly
+
+- [ ] **Step 2: Run the signing-service tests to verify they fail**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/SigningAssetsServiceTests test
+```
+
+Expected: FAIL because the signing service and models do not exist.
+
+- [ ] **Step 3: Write the failing create-app tests for locale and bundle-id driven input**
+
+Cover:
+
+- create-app now uses canonical `web apps create`
+- request assembly includes selected bundle ID and selected locale
+- request does not require free-text bundle ID typing in the UI layer
+
+- [ ] **Step 4: Run the app tests to verify they fail**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests test
+```
+
+Expected: FAIL because create-app still uses the old request shape.
+
+- [ ] **Step 5: Implement the minimal signing service and locale catalogue**
+
+Implement:
+
+- typed models for bundle IDs, certificates, devices, and provisioning profiles
+- service methods backed by real `asc ... --output json` commands
+- lightweight JSON parsing from CLI output
+- built-in locale catalogue for selectable app locales
+
+- [ ] **Step 6: Re-run the targeted service tests**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests -only-testing:ConnectMateTests/SigningAssetsServiceTests test
+```
+
+Expected: PASS.
+
+- [ ] **Step 7: Write the failing navigation/menu tests for the new signing module**
+
+Cover:
+
+- Sidebar / router includes signing assets
+- View menu includes signing assets
+- Main split view can route into signing assets
+
+- [ ] **Step 8: Run the navigation tests to verify they fail**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/MainMenuControllerTests test
+```
+
+Expected: FAIL because signing is not exposed in navigation yet.
+
+- [ ] **Step 9: Implement the signing module UI and bundle-id driven create-app sheet**
+
+Implement:
+
+- new `signing` app section
+- segmented list controller for identifiers / certificates / devices / profiles
+- detail controller with per-type actions
+- modal sheets for create/register flows
+- create-app sheet bundle ID popup + locale popup + “new identifier” inline entry
+
+- [ ] **Step 10: Re-run targeted tests**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -only-testing:ConnectMateTests/AppServiceTests -only-testing:ConnectMateTests/SigningAssetsServiceTests -only-testing:ConnectMateTests/MainMenuControllerTests test
+```
+
+Expected: PASS.
+
+- [ ] **Step 11: Re-run the non-UI suite**
+
+Run:
+
+```bash
+xcodebuild -workspace ConnectMate.xcworkspace -scheme ConnectMate -destination 'platform=macOS' -skip-testing:ConnectMateUITests test
+```
+
+Expected: PASS.
 
 ```bash
 git add ConnectMate/Core/Settings ConnectMate/App/AppThemeManager.swift ConnectMate/Modules/Settings/Localization.swift ConnectMate/en.lproj/Localizable.strings ConnectMate/zh-Hans.lproj/Localizable.strings ConnectMate/zh-Hant.lproj/Localizable.strings ConnectMateTests/Settings/AppSettingsTests.swift
