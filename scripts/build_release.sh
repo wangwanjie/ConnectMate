@@ -53,6 +53,42 @@ current_signing_authority() {
     codesign -dv --verbose=4 "$target_path" 2>&1 | sed -n 's/^Authority=\(Developer ID Application:.*\)$/\1/p' | head -1
 }
 
+first_developer_id_authority() {
+    security find-identity -v -p codesigning 2>/dev/null \
+        | sed -n 's/.*"\(Developer ID Application: .* ([A-Z0-9]\+)\)"/\1/p' \
+        | head -1
+}
+
+developer_id_authority_for_team() {
+    local team_id="$1"
+    security find-identity -v -p codesigning 2>/dev/null \
+        | sed -n "s/.*\"\\(Developer ID Application: .* (${team_id})\\)\"/\\1/p" \
+        | head -1
+}
+
+resolve_signing_authority() {
+    local target_path="$1"
+    local project_team_id="$2"
+    local authority=""
+
+    authority="$(current_signing_authority "$target_path")"
+    if [[ -n "$authority" ]]; then
+        echo "$authority"
+        return 0
+    fi
+
+    if [[ -n "$project_team_id" ]]; then
+        authority="$(developer_id_authority_for_team "$project_team_id")"
+        if [[ -n "$authority" ]]; then
+            echo "$authority"
+            return 0
+        fi
+    fi
+
+    authority="$(first_developer_id_authority)"
+    echo "$authority"
+}
+
 verify_signature() {
     local target_path="$1"
     local target_name="$2"
@@ -80,6 +116,12 @@ resign_macho_file() {
     /usr/bin/codesign --force --sign "$identity" --timestamp --options runtime "$target_path"
 }
 
+resign_bundle() {
+    local target_path="$1"
+    local identity="$2"
+    /usr/bin/codesign --force --sign "$identity" --timestamp --options runtime "$target_path"
+}
+
 resign_for_notarization() {
     local identity="$1"
     local frameworks_dir="$APP_PATH/Contents/Frameworks"
@@ -92,6 +134,14 @@ resign_for_notarization() {
                 resign_macho_file "$file_path" "$identity"
             fi
         done < <(find "$frameworks_dir" -type f -print0)
+
+        while IFS= read -r -d '' nested_app; do
+            resign_bundle "$nested_app" "$identity"
+        done < <(find "$frameworks_dir" -type d -name "*.app" -print0)
+
+        while IFS= read -r -d '' framework_path; do
+            resign_bundle "$framework_path" "$identity"
+        done < <(find "$frameworks_dir" -type d -name "*.framework" -print0)
     fi
 
     /usr/bin/codesign --force --sign "$identity" --timestamp --options runtime \
@@ -129,19 +179,22 @@ require_command xcodebuild
 require_command codesign
 require_command xcrun
 require_command create_pretty_dmg.sh
+require_command security
 
 cd "$PROJECT_DIR"
 
 echo "读取版本信息..."
 MARKETING_VERSION="$(read_project_setting "MARKETING_VERSION")"
 BUILD_VERSION="$(read_project_setting "CURRENT_PROJECT_VERSION")"
+PROJECT_TEAM_ID="$(read_project_setting "DEVELOPMENT_TEAM")"
 
-if [[ -z "$MARKETING_VERSION" || -z "$BUILD_VERSION" ]]; then
-    echo "错误: 无法从 project.pbxproj 读取版本信息" >&2
+if [[ -z "$MARKETING_VERSION" || -z "$BUILD_VERSION" || -z "$PROJECT_TEAM_ID" ]]; then
+    echo "错误: 无法从 project.pbxproj 读取版本信息或签名 Team ID" >&2
     exit 1
 fi
 
 echo "版本号: $MARKETING_VERSION ($BUILD_VERSION)"
+echo "签名 Team ID: $PROJECT_TEAM_ID"
 
 echo "归档 $SCHEME (Release, arm64 + x86_64)..."
 xcodebuild -workspace "$WORKSPACE" \
@@ -160,12 +213,13 @@ if [[ ! -d "$APP_PATH" ]]; then
     exit 1
 fi
 
-SIGNING_AUTHORITY="$(current_signing_authority "$APP_PATH")"
+SIGNING_AUTHORITY="$(resolve_signing_authority "$APP_PATH" "$PROJECT_TEAM_ID")"
 if [[ -z "$SIGNING_AUTHORITY" ]]; then
-    echo "错误: 未能从构建产物识别 Developer ID Application 签名身份" >&2
+    echo "错误: 未能解析可用的 Developer ID Application 签名身份" >&2
     exit 1
 fi
 
+echo "重签名身份: $SIGNING_AUTHORITY"
 resign_for_notarization "$SIGNING_AUTHORITY"
 verify_signature "$APP_PATH" "ConnectMate.app"
 
