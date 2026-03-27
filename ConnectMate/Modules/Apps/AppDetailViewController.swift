@@ -16,9 +16,9 @@ final class AppDetailViewController: NSViewController {
     private var valueLabels: [String: NSTextField] = [:]
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view = ThemedBackgroundView { appearance in
+            NSColor.windowBackgroundColor.resolvedColor(with: appearance)
+        }
 
         iconView.image = NSImage(systemSymbolName: "app.fill", accessibilityDescription: nil)
         iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 46, weight: .medium)

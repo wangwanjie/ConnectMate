@@ -15,9 +15,9 @@ final class BuildDetailViewController: NSViewController {
     private var valueLabels: [String: NSTextField] = [:]
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view = ThemedBackgroundView { appearance in
+            NSColor.windowBackgroundColor.resolvedColor(with: appearance)
+        }
 
         titleLabel.font = .systemFont(ofSize: 26, weight: .semibold)
         subtitleLabel.font = .systemFont(ofSize: 13)

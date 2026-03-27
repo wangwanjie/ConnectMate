@@ -27,9 +27,9 @@ final class CLISetupViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view = ThemedBackgroundView { appearance in
+            NSColor.windowBackgroundColor.resolvedColor(with: appearance)
+        }
 
         let titleLabel = NSTextField(labelWithString: L10n.Onboarding.title)
         titleLabel.font = .systemFont(ofSize: 30, weight: .bold)

@@ -3,6 +3,7 @@ import AppKit
 @MainActor
 final class AppThemeManager {
     static let shared = AppThemeManager()
+    static let didChangeNotification = Notification.Name("ConnectMate.AppThemeManager.didChange")
 
     private(set) var appliedMode: AppearanceMode = .system
 
@@ -23,5 +24,7 @@ final class AppThemeManager {
         case .dark:
             application.appearance = NSAppearance(named: .darkAqua)
         }
+
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: mode)
     }
 }

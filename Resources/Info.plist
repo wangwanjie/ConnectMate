@@ -18,9 +18,31 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ConnectMateCLIRepositoryURL</key>
+	<string>https://github.com/rudrankriyam/App-Store-Connect-CLI</string>
+	<key>ConnectMateGitHubIssuesURL</key>
+	<string>https://github.com/wangwanjie/ConnectMate/issues</string>
+	<key>ConnectMateGitHubLatestReleaseAPIURL</key>
+	<string>https://api.github.com/repos/wangwanjie/ConnectMate/releases/latest</string>
+	<key>ConnectMateGitHubURL</key>
+	<string>https://github.com/wangwanjie/ConnectMate</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUEnableSystemProfiling</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/wangwanjie/ConnectMate/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string></string>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 </dict>
 </plist>

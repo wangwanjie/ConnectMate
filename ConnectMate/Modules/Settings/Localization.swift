@@ -11,8 +11,44 @@ enum L10n {
 
     enum Menu {
         static var about: String { tr("menu.about") }
+        static var checkForUpdates: String { tr("menu.checkUpdates") }
         static var preferences: String { tr("menu.preferences") }
         static var quit: String { tr("menu.quit") }
+        static var file: String { tr("menu.file") }
+        static var edit: String { tr("menu.edit") }
+        static var view: String { tr("menu.view") }
+        static var window: String { tr("menu.window") }
+        static var help: String { tr("menu.help") }
+        static var services: String { tr("menu.services") }
+        static var hideApp: String { tr("menu.hideApp") }
+        static var hideOthers: String { tr("menu.hideOthers") }
+        static var showAll: String { tr("menu.showAll") }
+        static var manageAPIKeys: String { tr("menu.manageAPIKeys") }
+        static var exportData: String { tr("menu.exportData") }
+        static var exportCommandLogs: String { tr("menu.exportCommandLogs") }
+        static var closeWindow: String { tr("menu.closeWindow") }
+        static var undo: String { tr("menu.undo") }
+        static var redo: String { tr("menu.redo") }
+        static var cut: String { tr("menu.cut") }
+        static var copy: String { tr("menu.copy") }
+        static var paste: String { tr("menu.paste") }
+        static var pasteAndMatchStyle: String { tr("menu.pasteAndMatchStyle") }
+        static var delete: String { tr("menu.delete") }
+        static var selectAll: String { tr("menu.selectAll") }
+        static var showMainWindow: String { tr("menu.showMainWindow") }
+        static var toggleSidebar: String { tr("menu.toggleSidebar") }
+        static var refreshCurrentPage: String { tr("menu.refreshCurrentPage") }
+        static var themeSystem: String { tr("menu.themeSystem") }
+        static var themeLight: String { tr("menu.themeLight") }
+        static var themeDark: String { tr("menu.themeDark") }
+        static var startViewScopeInspector: String { tr("menu.startViewScopeInspector") }
+        static var minimize: String { tr("menu.minimize") }
+        static var zoom: String { tr("menu.zoom") }
+        static var bringAllToFront: String { tr("menu.bringAllToFront") }
+        static var githubRepository: String { tr("menu.githubRepository") }
+        static var reportIssue: String { tr("menu.reportIssue") }
+        static var ascCLIRepository: String { tr("menu.ascCLIRepository") }
+        static var acknowledgements: String { tr("menu.acknowledgements") }
     }
 
     enum Sidebar {
@@ -229,6 +265,19 @@ enum L10n {
         static var validate: String { tr("common.validate") }
         static var activate: String { tr("common.activate") }
         static var close: String { tr("common.close") }
+        static var ok: String { tr("common.ok") }
+    }
+
+    enum Updates {
+        static var unconfigured: String { tr("updates.unconfigured") }
+        static var githubStatusError: String { tr("updates.githubStatusError") }
+        static var latestTitle: String { tr("updates.latestTitle") }
+        static var latestMessage: String { tr("updates.latestMessage") }
+        static var availableTitle: String { tr("updates.availableTitle") }
+        static var availableMessage: String { tr("updates.availableMessage") }
+        static var availableNamedMessage: String { tr("updates.availableNamedMessage") }
+        static var openRelease: String { tr("updates.openRelease") }
+        static var notNow: String { tr("updates.notNow") }
     }
 
     enum APIKeys {

@@ -4,7 +4,10 @@ final class AppBootstrap: NSObject {
     private let router = AppRouter()
     private let settings = AppSettings.shared
     private let databaseManager = DatabaseManager.shared
+    private let updateManager: any AppUpdateManaging = AppUpdateManager.shared
+    private let dataExportService = AppDataExportService()
     private var mainWindowController: MainWindowController?
+    private var mainMenuController: MainMenuController?
 
     func start() {
         let environment = ProcessInfo.processInfo.environment
@@ -17,10 +20,9 @@ final class AppBootstrap: NSObject {
 
         NSApp.setActivationPolicy(.regular)
         _ = databaseManager
+        updateManager.configure()
         AppThemeManager.shared.applyStoredPreference(settings: settings, application: NSApp)
-        if NSApp.mainMenu == nil {
-            NSApp.mainMenu = makeMainMenu()
-        }
+        installMainMenu()
 
         Task { @MainActor in
             let controller = MainWindowController(router: router)
@@ -36,29 +38,103 @@ final class AppBootstrap: NSObject {
             controller.window?.makeKeyAndOrderFront(nil)
             controller.window?.orderFrontRegardless()
             NSApp.activate(ignoringOtherApps: true)
+            self.updateManager.scheduleBackgroundUpdateCheck()
         }
     }
 
-    private func makeMainMenu() -> NSMenu {
-        let mainMenu = NSMenu()
-
-        let appMenuItem = NSMenuItem()
-        mainMenu.addItem(appMenuItem)
-
-        let appMenu = NSMenu()
-        appMenuItem.submenu = appMenu
-        appMenu.addItem(withTitle: L10n.Menu.about, action: nil, keyEquivalent: "")
-        let preferencesItem = appMenu.addItem(withTitle: L10n.Menu.preferences, action: #selector(openPreferences), keyEquivalent: ",")
-        preferencesItem.target = self
-        appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: L10n.Menu.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-
-        return mainMenu
+    private func installMainMenu() {
+        let controller = MainMenuController(
+            settings: settings,
+            updateManager: updateManager,
+            showMainWindow: { [weak self] in
+                self?.showMainWindow()
+            },
+            openPreferences: { [weak self] in
+                self?.openPreferences()
+            },
+            openAPIKeys: { [weak self] in
+                self?.openAPIKeys()
+            },
+            exportAllData: { [weak self] in
+                self?.exportAllData()
+            },
+            exportCommandLogs: { [weak self] in
+                self?.exportCommandLogs()
+            },
+            showAcknowledgements: { [weak self] in
+                self?.showAcknowledgements()
+            },
+            refreshCurrentPage: { [weak self] in
+                self?.mainWindowController?.refreshCurrentPage()
+            },
+            toggleSidebar: { [weak self] in
+                self?.mainWindowController?.toggleSidebar()
+            },
+            selectSection: { [weak self] section in
+                self?.showMainWindow()
+                self?.mainWindowController?.select(section: section)
+            },
+            currentSection: { [weak self] in
+                self?.mainWindowController?.currentSection
+            }
+        )
+        controller.install()
+        mainMenuController = controller
     }
 
     @objc
     private func openPreferences() {
         SettingsWindowController.shared.present()
+    }
+
+    private func openAPIKeys() {
+        SettingsWindowController.shared.presentAPIKeys()
+    }
+
+    private func showAcknowledgements() {
+        SettingsWindowController.shared.presentAcknowledgements()
+    }
+
+    private func showMainWindow() {
+        guard let window = mainWindowController?.window else {
+            return
+        }
+
+        mainWindowController?.showWindow(nil)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func exportAllData() {
+        do {
+            let url = try dataExportService.exportAllData()
+            presentInfoAlert(title: L10n.Settings.Data.exportData, message: url.path)
+        } catch {
+            presentInfoAlert(title: L10n.Settings.Data.exportData, message: error.localizedDescription)
+        }
+    }
+
+    private func exportCommandLogs() {
+        do {
+            let url = try dataExportService.exportCommandLogs()
+            presentInfoAlert(title: L10n.Menu.exportCommandLogs, message: url.path)
+        } catch {
+            presentInfoAlert(title: L10n.Menu.exportCommandLogs, message: error.localizedDescription)
+        }
+    }
+
+    private func presentInfoAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: L10n.Common.ok)
+        if let window = NSApp.keyWindow ?? mainWindowController?.window {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 
     private func resolveLaunchRoute() async -> LaunchRoute {

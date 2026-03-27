@@ -12,7 +12,11 @@ struct BuildServiceTests {
 
         let runner = FixtureBuildRunner(fixtureName: "builds-list.json")
         let repository = BuildRepository(dbWriter: dbQueue)
-        let service = BuildService(runner: runner, repository: repository)
+        let service = BuildService(
+            runner: runner,
+            repository: repository,
+            activeProfileProvider: { nil }
+        )
 
         let builds = try await service.refreshBuilds(appID: "123456789", status: nil)
         let cachedBuilds = try repository.fetchAll(appID: "123456789")
@@ -35,7 +39,8 @@ struct BuildServiceTests {
         let service = BuildService(
             runner: runner,
             repository: BuildRepository(dbWriter: dbQueue),
-            taskReporter: reporter
+            taskReporter: reporter,
+            activeProfileProvider: { nil }
         )
 
         try await service.expireBuilds(["BUILD_1", "BUILD_2"])

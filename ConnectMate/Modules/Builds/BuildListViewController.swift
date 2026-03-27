@@ -37,9 +37,9 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        view = ThemedBackgroundView { appearance in
+            NSColor.controlBackgroundColor.resolvedColor(with: appearance)
+        }
         buildLayout()
     }
 
@@ -90,6 +90,10 @@ final class BuildListViewController: NSViewController, NSTableViewDataSource, NS
 
     @objc
     private func handleRefresh() {
+        refreshBuilds()
+    }
+
+    func performRefreshFromMenu() {
         refreshBuilds()
     }
 

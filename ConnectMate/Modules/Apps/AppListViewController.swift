@@ -39,9 +39,15 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        let backgroundView = ThemedBackgroundView { appearance in
+            NSColor.controlBackgroundColor.resolvedColor(with: appearance)
+        }
+        backgroundView.onEffectiveAppearanceChange = { [weak self] in
+            self?.rowButtons.forEach { button in
+                button.refreshSelectionStyle()
+            }
+        }
+        view = backgroundView
         buildLayout()
     }
 
@@ -77,6 +83,10 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
                 }
             }
         }
+    }
+
+    func performRefreshFromMenu() {
+        refreshApps()
     }
 
     @objc
@@ -243,6 +253,7 @@ final class AppListViewController: NSViewController, NSSearchFieldDelegate {
 private final class AppRowButton: NSButton {
     private let nameLabel = NSTextField(labelWithString: "")
     private let bundleLabel = NSTextField(labelWithString: "")
+    private var isSelectedState = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -281,8 +292,26 @@ private final class AppRowButton: NSButton {
     }
 
     func updateSelection(isSelected: Bool) {
-        layer?.backgroundColor = isSelected ? NSColor.controlAccentColor.cgColor : NSColor.quaternaryLabelColor.withAlphaComponent(0.08).cgColor
-        nameLabel.textColor = isSelected ? .white : .labelColor
-        bundleLabel.textColor = isSelected ? NSColor.white.withAlphaComponent(0.85) : .secondaryLabelColor
+        isSelectedState = isSelected
+        applySelectionStyle()
+    }
+
+    func refreshSelectionStyle() {
+        applySelectionStyle()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        applySelectionStyle()
+    }
+
+    private func applySelectionStyle() {
+        let accentColor = NSColor.controlAccentColor.resolvedColor(with: effectiveAppearance)
+        let idleColor = NSColor.quaternaryLabelColor
+            .withAlphaComponent(0.08)
+            .resolvedColor(with: effectiveAppearance)
+        layer?.backgroundColor = (isSelectedState ? accentColor : idleColor).cgColor
+        nameLabel.textColor = isSelectedState ? .white : .labelColor
+        bundleLabel.textColor = isSelectedState ? NSColor.white.withAlphaComponent(0.85) : .secondaryLabelColor
     }
 }

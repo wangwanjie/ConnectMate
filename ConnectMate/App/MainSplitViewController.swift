@@ -23,6 +23,7 @@ final class MainSplitViewController: NSSplitViewController {
         }
         return controller
     }()
+    private var selectedSection: AppSection?
 
     init(router: AppRouter, settings: AppSettings) {
         self.router = router
@@ -35,7 +36,7 @@ final class MainSplitViewController: NSSplitViewController {
         let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarController)
         sidebarItem.minimumThickness = 180
         sidebarItem.maximumThickness = 260
-        sidebarItem.canCollapse = false
+        sidebarItem.canCollapse = true
 
         let listItem = NSSplitViewItem(viewController: listController)
         listItem.minimumThickness = 380
@@ -64,7 +65,35 @@ final class MainSplitViewController: NSSplitViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    var currentSection: AppSection? {
+        selectedSection
+    }
+
+    func select(section: AppSection) {
+        sidebarController.select(section: section)
+        show(section: section)
+    }
+
+    func refreshCurrentPage() {
+        switch selectedSection {
+        case .apps:
+            appListController.performRefreshFromMenu()
+        case .builds:
+            buildListController.performRefreshFromMenu()
+        default:
+            break
+        }
+    }
+
+    func toggleSidebarVisibility() {
+        guard let sidebarItem = splitViewItems.first else {
+            return
+        }
+        sidebarItem.animator().isCollapsed = !sidebarItem.isCollapsed
+    }
+
     private func show(section: AppSection) {
+        selectedSection = section
         switch section {
         case .apps:
             listController.display(appListController)
@@ -104,9 +133,10 @@ private final class PaneHostViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = (role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor).cgColor
+        view = ThemedBackgroundView { appearance in
+            (self.role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor)
+                .resolvedColor(with: appearance)
+        }
     }
 
     func display(_ child: NSViewController) {
@@ -153,9 +183,10 @@ private final class ModulePaneViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = (role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor).cgColor
+        view = ThemedBackgroundView { appearance in
+            (self.role == .list ? NSColor.controlBackgroundColor : NSColor.windowBackgroundColor)
+                .resolvedColor(with: appearance)
+        }
 
         titleLabel.font = .systemFont(ofSize: 28, weight: .semibold)
 

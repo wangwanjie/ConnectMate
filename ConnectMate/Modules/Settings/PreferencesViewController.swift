@@ -3,7 +3,7 @@ import GRDB
 import ServiceManagement
 import SnapKit
 
-private enum PreferencesSection: String, CaseIterable {
+enum PreferencesSection: String, CaseIterable {
     case general
     case appearance
     case notifications
@@ -37,6 +37,8 @@ private enum PreferencesSection: String, CaseIterable {
 
 final class PreferencesViewController: NSViewController {
     private let settings: AppSettings
+    private let updateManager: any AppUpdateManaging
+    private let dataExportService: AppDataExportService
     private let splitView = NSSplitView()
     private let sectionStack = NSStackView()
     private let contentScrollView = NSScrollView()
@@ -45,8 +47,14 @@ final class PreferencesViewController: NSViewController {
     private var sectionButtons: [PreferencesSection: NSButton] = [:]
     private var renderedSection: PreferencesSection?
 
-    init(settings: AppSettings) {
+    init(
+        settings: AppSettings,
+        updateManager: any AppUpdateManaging = AppUpdateManager.shared,
+        dataExportService: AppDataExportService = AppDataExportService()
+    ) {
         self.settings = settings
+        self.updateManager = updateManager
+        self.dataExportService = dataExportService
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -56,15 +64,18 @@ final class PreferencesViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
+        let backgroundView = ThemedBackgroundView { appearance in
+            NSColor.windowBackgroundColor.resolvedColor(with: appearance)
+        }
+        backgroundView.onEffectiveAppearanceChange = { [weak self] in
+            self?.updateSectionButtonStyles()
+        }
+        view = backgroundView
         buildLayout()
         render(section: .general)
     }
 
     private func buildLayout() {
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-
         splitView.isVertical = true
         splitView.dividerStyle = .thin
         splitView.adjustSubviews()
@@ -92,7 +103,7 @@ final class PreferencesViewController: NSViewController {
         sectionStack.alignment = .leading
 
         for section in PreferencesSection.allCases {
-            let button = NSButton(title: section.title, target: self, action: #selector(handleSectionButton(_:)))
+            let button = InsetButton(title: section.title, target: self, action: #selector(handleSectionButton(_:)))
             button.isBordered = false
             button.font = .systemFont(ofSize: 13, weight: .medium)
             button.alignment = .left
@@ -472,7 +483,9 @@ final class PreferencesViewController: NSViewController {
             button.contentTintColor = isSelected ? .white : .secondaryLabelColor
             button.wantsLayer = true
             button.layer?.cornerRadius = 8
-            button.layer?.backgroundColor = isSelected ? NSColor.controlAccentColor.cgColor : NSColor.clear.cgColor
+            button.layer?.backgroundColor = isSelected
+                ? NSColor.controlAccentColor.resolvedColor(with: view.effectiveAppearance).cgColor
+                : NSColor.clear.cgColor
         }
     }
 
@@ -603,32 +616,7 @@ final class PreferencesViewController: NSViewController {
     @objc
     private func exportData() {
         do {
-            let exportURL = try makeExportURL()
-            let payload = try DatabaseManager.shared.dbQueue.read { db -> [String: [[String: String]]] in
-                func fetchTable(_ name: String) throws -> [[String: String]] {
-                    try Row.fetchAll(db, sql: "SELECT * FROM \(name)").map { row in
-                        var object: [String: String] = [:]
-                        for column in row.columnNames {
-                            object[column] = row[column].map { String(describing: $0) } ?? ""
-                        }
-                        return object
-                    }
-                }
-
-                return [
-                    "api_keys": try fetchTable("api_keys"),
-                    "apps": try fetchTable("apps"),
-                    "builds": try fetchTable("builds"),
-                    "review_submissions": try fetchTable("review_submissions"),
-                    "testers": try fetchTable("testers"),
-                    "beta_groups": try fetchTable("beta_groups"),
-                    "iap_products": try fetchTable("iap_products"),
-                    "command_logs": try fetchTable("command_logs")
-                ]
-            }
-
-            let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
-            try data.write(to: exportURL)
+            let exportURL = try dataExportService.exportAllData()
             presentInfo(title: L10n.Settings.Data.exportData, message: exportURL.path)
         } catch {
             presentInfo(title: L10n.Settings.Data.exportData, message: error.localizedDescription)
@@ -649,7 +637,7 @@ final class PreferencesViewController: NSViewController {
 
     @objc
     private func checkForUpdatesNow() {
-        presentInfo(title: L10n.Settings.Updates.checkNow, message: L10n.Settings.Updates.sparklePending)
+        updateManager.checkForUpdates()
     }
 
     @objc
@@ -674,7 +662,7 @@ final class PreferencesViewController: NSViewController {
 
     @objc
     private func openFeedback() {
-        presentInfo(title: L10n.Settings.About.feedback, message: L10n.Settings.About.feedbackMessage)
+        updateManager.openIssues()
     }
 
     @objc
@@ -687,22 +675,36 @@ final class PreferencesViewController: NSViewController {
         presentInfo(title: L10n.Settings.About.acknowledgements, message: "SnapKit\nGRDB\nSparkle\nApp Store Connect CLI")
     }
 
-    private func makeExportURL() throws -> URL {
-        let directory = try FileManager.default.url(for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
-        return directory.appendingPathComponent("ConnectMate-export-\(formatter.string(from: Date())).json")
-    }
-
     private func presentInfo(title: String, message: String) {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L10n.Common.ok)
         if let window = view.window {
             alert.beginSheetModal(for: window)
         } else {
             alert.runModal()
+        }
+    }
+
+    func navigate(to section: PreferencesSection, presentAPIKeys: Bool = false, showAcknowledgements: Bool = false) {
+        if renderedSection != section {
+            render(section: section)
+        }
+
+        if presentAPIKeys {
+            openAPIKeyManager()
+        } else if showAcknowledgements {
+            self.showAcknowledgements()
+        }
+    }
+
+    func exportCommandLogsFromMenu() {
+        do {
+            let exportURL = try dataExportService.exportCommandLogs()
+            presentInfo(title: L10n.Menu.exportCommandLogs, message: exportURL.path)
+        } catch {
+            presentInfo(title: L10n.Menu.exportCommandLogs, message: error.localizedDescription)
         }
     }
 }

@@ -11,7 +11,11 @@ struct AppServiceTests {
 
         let runner = FixtureAppRunner(fixtureName: "apps-list.json")
         let repository = AppRepository(dbWriter: dbQueue)
-        let service = AppService(runner: runner, repository: repository)
+        let service = AppService(
+            runner: runner,
+            repository: repository,
+            activeProfileProvider: { nil }
+        )
 
         let apps = try await service.refreshApps(search: nil)
         let cachedApps = try repository.fetchAll()

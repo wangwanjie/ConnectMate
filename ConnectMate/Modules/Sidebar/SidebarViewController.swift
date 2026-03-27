@@ -25,9 +25,13 @@ final class SidebarViewController: NSViewController {
     }
 
     override func loadView() {
-        view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        let backgroundView = ThemedBackgroundView { appearance in
+            NSColor.windowBackgroundColor.resolvedColor(with: appearance)
+        }
+        backgroundView.onEffectiveAppearanceChange = { [weak self] in
+            self?.updateButtonStyles()
+        }
+        view = backgroundView
 
         let headerLabel = NSTextField(labelWithString: L10n.App.name)
         headerLabel.font = .systemFont(ofSize: 24, weight: .semibold)
@@ -87,7 +91,7 @@ final class SidebarViewController: NSViewController {
     }
 
     private func makeSidebarButton(title: String, symbolName: String, action: Selector) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
+        let button = InsetButton(title: title, target: self, action: action)
         button.isBordered = false
         button.setButtonType(.momentaryChange)
         button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
@@ -112,7 +116,7 @@ final class SidebarViewController: NSViewController {
             if isSelected {
                 button.wantsLayer = true
                 button.layer?.cornerRadius = 8
-                button.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+                button.layer?.backgroundColor = NSColor.controlAccentColor.resolvedColor(with: view.effectiveAppearance).cgColor
             } else {
                 button.layer?.backgroundColor = NSColor.clear.cgColor
             }
