@@ -297,7 +297,7 @@ final class ASCCommandRunner {
 }
 
 private final class DataAccumulator: @unchecked Sendable {
-    nonisolated(unsafe) private let lock = NSLock()
+    private let lock = NSLock()
     nonisolated(unsafe) private var storage = Data()
 
     nonisolated func append(_ data: Data) {

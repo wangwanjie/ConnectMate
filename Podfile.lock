@@ -6,18 +6,24 @@ PODS:
 
 DEPENDENCIES:
   - LookinServer/SwiftAndNoHook (from `/Users/VanJay/Documents/Work/Private/Lookin-AppKit/LookinServer`)
-  - ViewScopeServer (from `/Users/VanJay/Documents/Work/Private/ViewScope`)
+  - ViewScopeServer (from `https://github.com/wangwanjie/ViewScope.git`, branch `main`)
 
 EXTERNAL SOURCES:
   LookinServer:
     :path: "/Users/VanJay/Documents/Work/Private/Lookin-AppKit/LookinServer"
   ViewScopeServer:
-    :path: "/Users/VanJay/Documents/Work/Private/ViewScope"
+    :branch: main
+    :git: https://github.com/wangwanjie/ViewScope.git
+
+CHECKOUT OPTIONS:
+  ViewScopeServer:
+    :commit: d3cb8c308b8ee6e2f489b8d48a577e78e874e79a
+    :git: https://github.com/wangwanjie/ViewScope.git
 
 SPEC CHECKSUMS:
   LookinServer: 32e176f3ef9dfbda52026e2d9e18b7204c141272
   ViewScopeServer: 007a370de0021642dd7d4b6b598c73e85a3a6cc1
 
-PODFILE CHECKSUM: 1650c7a43519382d41a21c2a929137ef3864f97a
+PODFILE CHECKSUM: 0f58419b19ef23e2e0e4d54274cf5dc5bbde6a65
 
 COCOAPODS: 1.16.2

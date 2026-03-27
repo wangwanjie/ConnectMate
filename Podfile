@@ -9,9 +9,9 @@ inhibit_all_warnings!
 target 'ConnectMate' do
   use_frameworks! :linkage => :static
 
-  pod 'ViewScopeServer', :path => '/Users/VanJay/Documents/Work/Private/ViewScope'
+  # pod 'ViewScopeServer', :path => '/Users/VanJay/Documents/Work/Private/ViewScope', :configurations => ['Debug']
   pod 'LookinServer', :path => '/Users/VanJay/Documents/Work/Private/Lookin-AppKit/LookinServer', :subspecs => ['SwiftAndNoHook'], :configurations => ['Debug']
-  # pod 'ViewScopeServer', :git => 'https://github.com/wangwanjie/ViewScope.git', :branch => 'main', :configurations => ['Debug']
+  pod 'ViewScopeServer', :git => 'https://github.com/wangwanjie/ViewScope.git', :branch => 'main', :configurations => ['Debug']
 
   target 'ConnectMateTests' do
     inherit! :complete
