@@ -1,11 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"
-    xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
-    xmlns:dc="http://purl.org/dc/elements/1.1/">
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
-        <title>ConnectMate Appcast</title>
+        <title>ConnectMate Updates</title>
+        <item>
+            <title>1.0</title>
+            <pubDate>Fri, 27 Mar 2026 19:53:54 +0800</pubDate>
+            <link>https://github.com/wangwanjie/ConnectMate/releases/tag/v1.0</link>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/wangwanjie/ConnectMate/releases/download/v1.0/ConnectMate_v1.0_1.dmg" length="6543730" type="application/octet-stream" sparkle:edSignature="4efaeRPFuCseBnRUzl1SqclC0K1vhRVxbIXAWLh9WhSfVCXHZCMK80PbkaHLY1nz97WgPKiA3A77iHbmLz7DBQ==" />
+            <description>&lt;h1&gt;ConnectMate 1.0&lt;/h1&gt;
+&lt;p&gt;ConnectMate 1.0 首次发布，提供完整的 App Store Connect 批量管理桌面体验。&lt;/p&gt;
+&lt;h2&gt;本版本包含&lt;/h2&gt;
+&lt;ul&gt;&lt;li&gt;API Key 配置、连通性验证与多账号切换&lt;/li&gt;&lt;li&gt;我的 App、构建版本、提审、TestFlight、内购管理&lt;/li&gt;&lt;li&gt;证书、描述文件、设备与标识符管理&lt;/li&gt;&lt;li&gt;命令日志、缓存管理、导出与偏好设置&lt;/li&gt;&lt;li&gt;简体中文、繁体中文、英文界面&lt;/li&gt;&lt;li&gt;主题切换、快捷键、Sparkle 更新接入&lt;/li&gt;&lt;/ul&gt;
+&lt;h2&gt;发布说明&lt;/h2&gt;
+&lt;ul&gt;&lt;li&gt;安装包已完成 Developer ID 签名、公证与 stapler&lt;/li&gt;&lt;li&gt;最低支持 macOS 13&lt;/li&gt;&lt;li&gt;首次使用前请确保本机已安装 asc CLI，并准备好 App Store Connect API Key&lt;/li&gt;&lt;/ul&gt;</description>
+        </item>
         <link>https://github.com/wangwanjie/ConnectMate</link>
-        <description>ConnectMate update feed</description>
-        <language>en</language>
+        <description>ConnectMate release feed.</description>
+        <language>zh-CN</language>
     </channel>
 </rss>

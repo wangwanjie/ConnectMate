@@ -43,7 +43,7 @@
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/wangwanjie/ConnectMate/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string></string>
+	<string>lZirg1NEaCBaE2r1Xg+cZxVBhd3CXMtfO2Mov7FzvOY=</string>
 	<key>SUVerifyUpdateBeforeExtraction</key>
 	<true/>
 </dict>
