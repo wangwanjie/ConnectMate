@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ConnectMate — 原生 macOS 的 App Store Connect 管理工具</title>
+<meta name="description" content="ConnectMate 是一款原生 macOS 工具，通过本机的 asc CLI 管理 App Store Connect：API Key、我的 App、构建版本与签名资产，三栏界面，命令可追溯。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ConnectMate — 原生 macOS 的 App Store Connect 管理工具">
+<meta property="og:description" content="通过本机的 asc CLI 管理 App、构建版本与签名资产的原生 macOS 工具。">
+<meta property="og:image" content="assets/og.webp">
+<meta property="og:url" content="https://connectmate.vanjay.cn/">
+<meta name="theme-color" content="#fbfbfd">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<script>
+// 首屏前设定主题与语言，避免闪烁。URL 参数优先于 localStorage。
+(function () {
+  var q = new URLSearchParams(location.search);
+  var root = document.documentElement;
+  var theme = q.get('theme') || localStorage.getItem('cm-theme') || 'system';
+  if (theme !== 'light' && theme !== 'dark') {
+    theme = 'system';
+  }
+  var dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  root.dataset.theme = dark ? 'dark' : 'light';
+  root.dataset.pref = theme;
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#04050c' : '#fbfbfd';
+  var lang = q.get('lang') || localStorage.getItem('cm-lang');
+  if (!lang) {
+    var list = navigator.languages || [navigator.language || 'en'];
+    lang = 'en';
+    for (var i = 0; i < list.length; i++) {
+      var l = (list[i] || '').toLowerCase();
+      if (/^zh-(tw|hk|mo|hant)/.test(l)) {
+        lang = 'zh-Hant';
+        break;
+      }
+      if (/^zh/.test(l)) {
+        lang = 'zh-Hans';
+        break;
+      }
+      if (/^en/.test(l)) {
+        lang = 'en';
+        break;
+      }
+    }
+  }
+  if (lang !== 'en' && lang !== 'zh-Hant') {
+    lang = 'zh-Hans';
+  }
+  root.lang = lang;
+  root.classList.add('boot');
+})();
+</script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="ConnectMate">
+      <img src="assets/icon-64.webp" width="26" height="26" alt="ConnectMate 图标" data-i18n-alt="iconAlt">
+      <span>ConnectMate</span>
+    </a>
+    <nav class="nav-links" aria-label="页面导航" data-i18n-aria="navLabel">
+      <a href="#story" data-i18n="navStory">工作流</a>
+      <a href="#details" data-i18n="navDetails">细节</a>
+      <a href="#start" data-i18n="navStart">开始使用</a>
+      <a href="#download" data-i18n="navDownload">下载</a>
+    </nav>
+    <div class="nav-tools">
+      <div class="seg" role="group" aria-label="语言" data-i18n-aria="langLabel" id="langSeg">
+        <button type="button" data-lang="zh-Hans" aria-pressed="false" lang="zh-Hans">简</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en">EN</button>
+        <button type="button" data-lang="zh-Hant" aria-pressed="false" lang="zh-Hant">繁</button>
+      </div>
+      <div class="seg" role="group" aria-label="主题" data-i18n-aria="themeLabel" id="themeSeg">
+        <button type="button" data-theme-set="light" aria-pressed="false" aria-label="浅色" data-i18n-aria="themeLight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg></button>
+        <button type="button" data-theme-set="dark" aria-pressed="false" aria-label="深色" data-i18n-aria="themeDark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></button>
+        <button type="button" data-theme-set="system" aria-pressed="false" aria-label="跟随系统" data-i18n-aria="themeSystem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/><path d="M12 4.5v12" stroke-width="0"/><path d="M12 6.5a4 4 0 0 0 0 8z" fill="currentColor" stroke="none"/></svg></button>
+      </div>
+      <a class="gh" href="https://github.com/wangwanjie/ConnectMate" aria-label="GitHub 仓库" data-i18n-aria="ghLabel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="wrap">
+      <p class="eyebrow"><img src="assets/icon-128.webp" width="40" height="40" alt="" fetchpriority="high"><span data-i18n="eyebrow">ConnectMate · macOS 13 及更高版本</span></p>
+      <h1><span data-i18n="h1a">把 App Store Connect</span><br><span class="grad" data-i18n="h1b">装进一扇原生窗口。</span></h1>
+      <p class="lede" data-i18n="lede">ConnectMate 通过本机的 asc CLI 管理 API Key、App、构建版本与签名资产。三栏界面，批量操作，每条命令都留有记录。</p>
+      <div class="cta">
+        <a class="btn primary" data-dl href="https://github.com/wangwanjie/ConnectMate/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span data-i18n="ctaDownload">下载 ConnectMate</span></a>
+        <a class="btn ghost" href="#story"><span data-i18n="ctaStory">看看怎么用</span> ›</a>
+      </div>
+      <p class="meta" data-meta><span data-i18n="metaLine">版本 1.0 · Universal · 6.5 MB · 已签名并经 Apple 公证</span></p>
+    </div>
+  </section>
+
+  <section class="story" id="story" aria-label="工作流" data-i18n-aria="navStory">
+    <div class="stage">
+      <div class="captions">
+        <ol class="stepnav" id="stepnav">
+          <li><button type="button" data-go="0" data-i18n="s0n">连接账号</button></li>
+          <li><button type="button" data-go="1" data-i18n="s1n">我的 App</button></li>
+          <li><button type="button" data-go="2" data-i18n="s2n">构建版本</button></li>
+          <li><button type="button" data-go="3" data-i18n="s3n">签名资产</button></li>
+        </ol>
+        <div class="caps">
+          <article class="cap on" data-cap="0">
+            <p class="k" data-i18n="s0k">01 / API KEY</p>
+            <h2 data-i18n-html="s0h">拖入 .p8，<br>账号就绪。</h2>
+            <p data-i18n="s0p">在 API Key 管理里填写 Issuer ID 与 Key ID，拖入 .p8 私钥，一键验证。可以保存多套配置并随时切换当前账号；私钥以安全作用域书签引用，文件留在原处。</p>
+            <ul><li data-i18n="s0c1">多账号切换</li><li data-i18n="s0c2">连通性验证</li><li data-i18n="s0c3">asc auth login</li></ul>
+          </article>
+          <article class="cap" data-cap="1">
+            <p class="k" data-i18n="s1k">02 / APPS</p>
+            <h2 data-i18n-html="s1h">所有 App，<br>一列看清。</h2>
+            <p data-i18n="s1p">刷新一次，列表写入本地缓存，按名称或 Bundle ID 即时搜索；右侧详情列出 Bundle ID、SKU、App ID 与平台。新 App 也能在这里直接创建。</p>
+            <ul><li data-i18n="s1c1">本地缓存</li><li data-i18n="s1c2">即时搜索</li><li data-i18n="s1c3">创建 App</li></ul>
+          </article>
+          <article class="cap" data-cap="2">
+            <p class="k" data-i18n="s2k">03 / BUILDS</p>
+            <h2 data-i18n-html="s2h">勾选几个，<br>一次过期。</h2>
+            <p data-i18n="s2p">按 App 加载构建版本，处理中、有效、无效、已过期一目了然。多选后批量标记过期，进度显示在后台任务里；要发新版时，直接添加 App Store 版本。</p>
+            <ul><li data-i18n="s2c1">批量标记过期</li><li data-i18n="s2c2">添加版本</li><li data-i18n="s2c3">后台任务进度</li></ul>
+          </article>
+          <article class="cap" data-cap="3">
+            <p class="k" data-i18n="s3k">04 / SIGNING</p>
+            <h2 data-i18n-html="s3h">证书与描述文件，<br>不必再开网页。</h2>
+            <p data-i18n="s3p">标识符、证书、设备、描述文件集中在一处：生成 CSR 并创建证书，用当前 Mac 的 UDID 注册设备，从列表勾选 Bundle ID、证书和设备创建描述文件，下载或删除点一下即可。</p>
+            <ul><li data-i18n="s3c1">生成 CSR</li><li data-i18n="s3c2">注册设备</li><li data-i18n="s3c3">配置标识符能力</li></ul>
+          </article>
+        </div>
+      </div>
+      <div class="frame" id="frame">
+        <div class="winbox"><div class="win" id="win" role="img" aria-label="ConnectMate 主窗口示意" data-i18n-aria="winAlt"></div></div>
+        <div class="console" id="console" aria-live="off">
+          <div class="ln"><span class="p">$</span><span class="cmd" id="cmd">asc auth login --network</span><span class="caret"></span></div>
+          <div class="out" id="out"></div>
+        </div>
+        <p class="note" data-i18n="winNote">界面示意，图中 App 与数据均为虚构示例。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="details">
+    <div class="wrap">
+      <div class="sec-h reveal">
+        <p class="k" data-i18n="detK">DETAILS</p>
+        <h2 data-i18n="detH">安静做事，留下记录。</h2>
+        <p data-i18n="detP">这些细节让日常的 App Store Connect 杂务少一点意外。</p>
+      </div>
+      <div class="grid">
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4-4 4M11 16h9"/></svg></div>
+          <h3 data-i18n="c1h">命令日志</h3>
+          <p data-i18n="c1p">每条 asc 命令连同参数、输出、退出码与耗时写入本地数据库，可从「文件」菜单导出。</p>
+        </article>
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></div>
+          <h3 data-i18n="c2h">本地缓存</h3>
+          <p data-i18n="c2p">App、构建版本等数据缓存在本机 SQLite。有效期可选 5 分钟、30 分钟、1 小时或手动刷新，也可一键清除，配置保留。</p>
+        </article>
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 10.5L12 15l4.5-4.5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></div>
+          <h3 data-i18n="c3h">导出所有数据</h3>
+          <p data-i18n="c3p">API Key 配置、缓存的 App 与构建版本、命令日志，一并导出为 JSON 备份，保存位置自选。</p>
+        </article>
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.6 5.7 3.6 9s-1.1 6.3-3.6 9c-2.5-2.7-3.6-5.7-3.6-9S9.5 5.7 12 3z"/></svg></div>
+          <h3 data-i18n="c4h">三语与三种外观</h3>
+          <p data-i18n="c4p">简体中文、繁体中文、英文界面；跟随系统、浅色、深色三种主题，侧边栏样式与列表行高也可调。</p>
+        </article>
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></div>
+          <h3 data-i18n="c5h">快捷键与代理</h3>
+          <p data-i18n="c5p">可录制全局快捷键与刷新快捷键；为 asc 设置 HTTP 代理、命令超时与重试次数。</p>
+        </article>
+        <article class="card reveal">
+          <div class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></div>
+          <h3 data-i18n="c6h">自动更新</h3>
+          <p data-i18n="c6p">内置 Sparkle，更新包经 EdDSA 签名校验；可设置检查频率，也能随时手动检查。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec alt" id="start">
+    <div class="wrap">
+      <div class="sec-h reveal">
+        <p class="k" data-i18n="stK">GET STARTED</p>
+        <h2 data-i18n="stH">三步开始。</h2>
+        <p data-i18n="stP">ConnectMate 依赖本机的 asc CLI 与一把 App Store Connect API Key。</p>
+      </div>
+      <ol class="steps">
+        <li class="reveal">
+          <h3 data-i18n="t1h">安装 asc CLI</h3>
+          <p data-i18n-html="t1p">按 <a href="https://github.com/rudrankriyam/App-Store-Connect-CLI">App Store Connect CLI</a> 项目说明安装。默认路径 <code>/usr/local/bin/asc</code>，可在「设置 → CLI 与 API」中修改；首次启动会自动检查。</p>
+        </li>
+        <li class="reveal">
+          <h3 data-i18n="t2h">准备 API Key</h3>
+          <p data-i18n="t2p">在 App Store Connect 后台创建 API Key，记下 Issuer ID 与 Key ID，并下载 .p8 私钥文件。</p>
+        </li>
+        <li class="reveal">
+          <h3 data-i18n="t3h">拖入并验证</h3>
+          <p data-i18n="t3p">打开「管理 API Key」，拖入 .p8、填好信息后点击验证，再刷新「我的 App」即可开始。</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec dl" id="download">
+    <div class="wrap">
+      <img class="dl-icon reveal" src="assets/icon-256.webp" srcset="assets/icon-128.webp 128w, assets/icon-256.webp 256w" sizes="128px" width="128" height="128" alt="ConnectMate 图标" data-i18n-alt="iconAlt" loading="lazy" decoding="async">
+      <h2 class="reveal"><span data-i18n="dlH">下载 ConnectMate</span></h2>
+      <dl class="facts reveal">
+        <div><dt data-i18n="fVer">版本</dt><dd data-ver>1.0</dd></div>
+        <div><dt data-i18n="fSys">系统要求</dt><dd data-i18n="fSysV">macOS 13 或更高</dd></div>
+        <div><dt data-i18n="fArch">架构</dt><dd data-i18n="fArchV">Universal（Apple 芯片 + Intel）</dd></div>
+        <div><dt data-i18n="fSign">签名</dt><dd data-i18n="fSignV">Developer ID · 已公证</dd></div>
+      </dl>
+      <div class="cta reveal">
+        <a class="btn primary" data-dl href="https://github.com/wangwanjie/ConnectMate/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span data-i18n="dlBtn">下载 DMG</span><span data-size>· 6.5 MB</span></a>
+        <a class="btn ghost" href="https://github.com/wangwanjie/ConnectMate/releases"><span data-i18n="dlAll">全部版本</span> ›</a>
+      </div>
+      <p class="small reveal" data-i18n="dlNote">打开 DMG，把 ConnectMate 拖进「应用程序」文件夹。之后的新版本会在应用内通过 Sparkle 提示更新。</p>
+    </div>
+  </section>
+
+  <section class="sec alt" id="privacy">
+    <div class="wrap">
+      <div class="privacy reveal">
+        <h3 data-i18n="pvH">隐私</h3>
+        <p data-i18n-html="pvP1">ConnectMate 没有账号系统，也不内置统计 SDK。API Key 配置、缓存与命令日志保存在本机 <code>~/Library/Application Support/ConnectMate</code>，对 App Store Connect 的访问全部经由本机的 asc CLI 完成。</p>
+        <p data-i18n="pvP2">检查更新时，应用会向 GitHub 请求更新源与 Release 信息；Sparkle 可能随请求附带匿名系统信息（如 macOS 版本）。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="more" href="https://vanjay.cn" data-i18n="ftMore">VanJay 的更多作品 ›</a>
+    <a href="https://github.com/wangwanjie/ConnectMate" data-i18n="ftRepo">GitHub 仓库</a>
+    <a href="https://github.com/wangwanjie/ConnectMate/issues" data-i18n="ftIssues">反馈问题</a>
+    <a href="https://github.com/wangwanjie/ConnectMate/releases" data-i18n="ftReleases">发布记录</a>
+    <span class="copy">© 2026 VanJay</span>
+  </div>
+</footer>
+<script src="assets/app.js" defer></script>
+</body>
+</html>
